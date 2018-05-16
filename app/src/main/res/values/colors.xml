@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#393A3E</color>
+    <color name="colorPrimaryDark">#393A3E</color>
+    <color name="color_Accent">#FF4081</color>
+    <color name="white">#ffffff</color>
+    <color name="black">#000000</color>
+    <color name="lightGrey">#cdcdcd</color>
+    <color name="veryLightGrey">#dbdbdb</color>
+    <color name="green">#45BF1A</color>
+    <!--登录-->
+    <color name="bg_login_state_normal">#006BD8</color>
+    <color name="bg_login_state_pressed">#0167cf</color>
+</resources>

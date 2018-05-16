@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:padding="10dp"
+    android:background="@color/lightGrey">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/item_message_left_layout">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/item_message_head_left_imageView"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_alignParentStart="true"
+            android:src="@drawable/iv_0" />
+
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_message_left"
+        android:minHeight="50dp"
+        android:orientation="horizontal"
+        android:layout_alignTop="@id/item_message_head_left_imageView"
+        android:layout_marginTop="15dp"
+        android:layout_marginEnd="20dp"
+        android:layout_toEndOf="@id/item_message_head_left_imageView">
+        <TextView
+            android:id="@+id/tv_text_left_item_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="10dp"
+            android:textSize="15sp"
+            android:textColor="@color/black"
+            tools:text="鉴定完毕" />
+
+
+        <ImageView
+            android:id="@+id/iv_image_left_item_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_margin="8dp"
+            tools:src="@drawable/iv_1"
+            android:scaleType="centerCrop"/>
+
+
+    </LinearLayout>
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/item_message_right_layout"
+        >
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/item_message_head_right_imageView"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/iv_4"
+            android:layout_alignParentEnd="true" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_message_right"
+            android:minHeight="50dp"
+            android:orientation="horizontal"
+            android:layout_alignTop="@id/item_message_head_right_imageView"
+            android:layout_marginTop="15dp"
+            android:layout_marginStart="20dp"
+            android:layout_toStartOf="@id/item_message_head_right_imageView">
+
+
+            <TextView
+                android:id="@+id/tv_text_right_item_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textColor="@color/white"
+                android:layout_margin="10dp"
+                android:textSize="15sp"
+                tools:text="鉴定完毕" />
+
+
+            <ImageView
+                android:id="@+id/iv_image_right_item_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_margin="8dp"
+                tools:src="@drawable/iv_4"
+                android:scaleType="centerCrop"/>
+
+
+        </LinearLayout>
+
+
+    </RelativeLayout>
+
+
+</LinearLayout>

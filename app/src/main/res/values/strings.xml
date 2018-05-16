@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">P2P</string>
+    <string name="nickname">昵称</string>
+    <string name="login">登录</string>
+    <string name="login_tip">P2P Chat</string>
+    <string name="select_head_image">←选择头像</string>
+    <string name="scan_device_ing">正在扫描对等方</string>
+    <string name="chat">聊天室</string>
+    <string name="peers_list">成员列表</string>
+    <string name="search_device">搜索对等方</string>
+    <string name="open">打开</string>
+    <string name="close">关闭</string>
+</resources>
