@@ -1,6 +1,5 @@
 package com.rdc.p2p.contract;
 
-import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
 
 import java.util.List;
@@ -14,18 +13,20 @@ public interface PeerListContract {
         void updatePeerList(List<PeerBean> list);
         void messageReceived(PeerBean peerBean);
         void addPeer(PeerBean peerBean);
+        void removePeer(String ip);
     }
 
     interface Model{
         void initSocket();
+        void LinkPeers(List<PeerBean> list);
     }
 
     interface Presenter{
         void initSocket();
         void updatePeerList(List<PeerBean> list);
         void addPeer(PeerBean peerBean);
-        void messageReceived(MessageBean messageBean);
-        void sendMessage(MessageBean messageBean);
+        void messageReceived(PeerBean peerBean);
+        void removePeer(String ip);
     }
 
 }

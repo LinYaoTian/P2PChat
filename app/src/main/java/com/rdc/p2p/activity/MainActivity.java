@@ -24,6 +24,7 @@ import com.rdc.p2p.R;
 import com.rdc.p2p.base.BaseActivity;
 import com.rdc.p2p.base.BasePresenter;
 import com.rdc.p2p.fragment.PeerListFragment;
+import com.rdc.p2p.presenter.PeerListPresenter;
 
 import java.net.InetAddress;
 import java.net.MulticastSocket;

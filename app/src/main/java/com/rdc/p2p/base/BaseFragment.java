@@ -15,9 +15,10 @@ import android.widget.Toast;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 
-public abstract class BaseFragment extends Fragment {
+public abstract class BaseFragment<T extends BasePresenter> extends Fragment {
     protected BaseActivity mBaseActivity;  //贴附的activity,Fragment中可能用到
     protected View mRootView;           //根view
+    protected T mPresenter;
     Unbinder mUnbinder;
 
     @Override
@@ -37,7 +38,18 @@ public abstract class BaseFragment extends Fragment {
         return mRootView;
     }
 
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        mPresenter = getInstance();
+        if (mPresenter != null){
+            mPresenter.attachView(this);
+        }
+    }
+
     protected abstract int setLayoutResourceId();
+
+    protected abstract T getInstance();
 
     /**
      * 初始化数据
@@ -58,8 +70,9 @@ public abstract class BaseFragment extends Fragment {
 
     @Override
     public void onDestroyView() {
-        super.onDestroyView();
         mUnbinder.unbind();
+        mPresenter.detachView();
+        super.onDestroyView();
     }
 
 

@@ -10,10 +10,14 @@ import android.widget.TextView;
 import com.rdc.p2p.R;
 import com.rdc.p2p.adapter.PeerListRvAdapter;
 import com.rdc.p2p.base.BaseFragment;
+import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
+import com.rdc.p2p.contract.PeerListContract;
 import com.rdc.p2p.listener.OnClickRecyclerViewListener;
+import com.rdc.p2p.presenter.PeerListPresenter;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import butterknife.BindView;
@@ -21,7 +25,7 @@ import butterknife.BindView;
 /**
  * Created by Lin Yaotian on 2018/5/16.
  */
-public class PeerListFragment extends BaseFragment {
+public class PeerListFragment extends BaseFragment<PeerListPresenter> implements PeerListContract.View  {
 
     @BindView(R.id.rv_peer_list_fragment_peer_list)
     RecyclerView mRvPeerList;
@@ -36,6 +40,10 @@ public class PeerListFragment extends BaseFragment {
         return R.layout.fragment_peer_list;
     }
 
+    @Override
+    protected PeerListPresenter getInstance() {
+        return new PeerListPresenter(mBaseActivity);
+    }
 
 
     @Override
@@ -84,5 +92,42 @@ public class PeerListFragment extends BaseFragment {
 
             }
         });
+    }
+
+    @Override
+    public void updatePeerList(List<PeerBean> list) {
+        mPeerListRvAdapter.updateData(list);
+    }
+
+    @Override
+    public void messageReceived(PeerBean peerBean) {
+        List<PeerBean> list = mPeerListRvAdapter.getDataList();
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i).getIp().equals(peerBean.getIp())){
+                list.set(i,peerBean);
+                mPeerListRvAdapter.notifyItemChanged(i);
+                break;
+            }
+        }
+    }
+
+    @Override
+    public void addPeer(PeerBean peerBean) {
+        List<PeerBean> list = new ArrayList<>();
+        list.add(peerBean);
+        mPeerListRvAdapter.appendData(list);
+    }
+
+    @Override
+    public void removePeer(String ip) {
+        List<PeerBean> list = mPeerListRvAdapter.getDataList();
+        Iterator<PeerBean> iterator = list.iterator();
+        while (iterator.hasNext()){
+            PeerBean peerBean = iterator.next();
+            if (peerBean.getIp().equals(ip)){
+                iterator.remove();
+                break;
+            }
+        }
     }
 }
