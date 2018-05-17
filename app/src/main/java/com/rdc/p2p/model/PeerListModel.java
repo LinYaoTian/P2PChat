@@ -42,6 +42,7 @@ public class PeerListModel implements PeerListContract.Model {
         mPresenter = presenter;
         isDestroy = new AtomicBoolean(false);
         isInitServerSocket  = new AtomicBoolean(false);
+
     }
 
     @Override
