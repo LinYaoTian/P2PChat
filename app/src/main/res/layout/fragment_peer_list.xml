@@ -2,13 +2,46 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    xmlns:tool="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:gravity="center">
 
     <android.support.v7.widget.RecyclerView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/rv_peer_list_fragment_peer_list"
+        android:visibility="gone"
         >
     </android.support.v7.widget.RecyclerView>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/tv_tip_nonePeer_fragment_peer_list"
+        android:textColor="@color/colorPrimary"
+        android:textSize="@dimen/text_size_normal"
+        tool:text="暂时没有其他成员哦！"
+        android:visibility="gone"
+        />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:id="@+id/ll_loadingPeersInfo_fragment_peer_list"
+        >
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_size_normal"
+            android:textColor="@color/colorPrimary"
+            android:layout_marginTop="20dp"
+            android:text="@string/loadingPeersInfo" />
+    </LinearLayout>
 
 </LinearLayout>

@@ -25,7 +25,7 @@ import java.util.Objects;
 /**
  * Created by Lin Yaotian on 2018/5/14.
  */
-public class ProgressBarFragment extends DialogFragment implements ScanDeviceContract.View {
+public class ScanDeviceFragment extends DialogFragment implements ScanDeviceContract.View {
 
     private View mView;
     private Activity mActivity;

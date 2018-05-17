@@ -14,19 +14,24 @@ public interface PeerListContract {
         void messageReceived(PeerBean peerBean);
         void addPeer(PeerBean peerBean);
         void removePeer(String ip);
+        void serverSocketError(String msg);
     }
 
     interface Model{
-        void initSocket();
-        void LinkPeers(List<PeerBean> list);
+        void initServerSocket();
+        void linkPeers(List<PeerBean> list);
+        void disconnect();
     }
 
     interface Presenter{
+        void disconnect();
         void initSocket();
+        void linkPeers(List<PeerBean> list);
         void updatePeerList(List<PeerBean> list);
         void addPeer(PeerBean peerBean);
         void messageReceived(PeerBean peerBean);
         void removePeer(String ip);
+        void serverSocketError(String msg);
     }
 
 }

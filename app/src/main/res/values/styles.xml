@@ -8,6 +8,12 @@
         <item name="colorAccent">@color/color_Accent</item>
     </style>
 
+    <style name="EditTextTheme" parent="AppTheme">
+        <item name="colorPrimary">@color/green</item>
+        <item name="colorPrimaryDark">@color/green</item>
+        <item name="colorAccent">@color/green</item>
+    </style>
+
     <!-- Base application theme. -->
     <style name="TextInputLayoutTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->

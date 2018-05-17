@@ -10,4 +10,5 @@
     <string name="search_device">搜索对等方</string>
     <string name="open">打开</string>
     <string name="close">关闭</string>
+    <string name="loadingPeersInfo">加载成员信息</string>
 </resources>

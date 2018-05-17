@@ -24,6 +24,7 @@ import com.rdc.p2p.R;
 import com.rdc.p2p.base.BaseActivity;
 import com.rdc.p2p.base.BasePresenter;
 import com.rdc.p2p.fragment.PeerListFragment;
+import com.rdc.p2p.fragment.ScanDeviceFragment;
 import com.rdc.p2p.presenter.PeerListPresenter;
 
 import java.net.InetAddress;
@@ -99,6 +100,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         mDrawerToggle.syncState();
         mDrawerLayout.addDrawerListener(mDrawerToggle);
         mPeerListFragment = new PeerListFragment();
+        mPeerListFragment.setPeerList(getIntent().getStringArrayListExtra("ipList"));
         mVpContent.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
             @Override
             public Fragment getItem(int position) {
@@ -136,7 +138,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.menu_search:
-                showToast("搜索");
+                ScanDeviceFragment mScanDeviceFragment = new ScanDeviceFragment();
+                mScanDeviceFragment.setCancelable(false);
+                mScanDeviceFragment.show(getSupportFragmentManager(),"scanDevice");
                 break;
             case android.R.id.home:
                 mDrawerLayout.openDrawer(GravityCompat.START);
@@ -169,7 +173,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         }
     }
 
-//    private void initSocket() {
+//    private void initServerSocket() {
 //        try {
 //            mSocket = new MulticastSocket(BROADCAST_PORT);
 //            mAddress = InetAddress.getByName(BROADCAST_IP);

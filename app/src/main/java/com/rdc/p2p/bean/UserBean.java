@@ -16,10 +16,10 @@ public class UserBean {
     }
 
     public String getNickName() {
-        return nickName;
+        return nickName == null ? "" : nickName;
     }
 
     public void setNickName(String nickName) {
-        this.nickName = nickName;
+        this.nickName = nickName == null ? "" : nickName;
     }
 }

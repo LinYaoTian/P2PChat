@@ -8,6 +8,7 @@
     <color name="lightGrey">#cdcdcd</color>
     <color name="veryLightGrey">#dbdbdb</color>
     <color name="green">#45BF1A</color>
+    <color name="green_pressed">#3aa115</color>
     <!--登录-->
     <color name="bg_login_state_normal">#006BD8</color>
     <color name="bg_login_state_pressed">#0167cf</color>
