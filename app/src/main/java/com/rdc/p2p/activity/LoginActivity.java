@@ -1,15 +1,21 @@
 package com.rdc.p2p.activity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 
 import com.bumptech.glide.Glide;
+import com.rdc.p2p.app.App;
 import com.rdc.p2p.bean.UserBean;
 import com.rdc.p2p.eventBean.IpDeviceEventBean;
 import com.rdc.p2p.fragment.ScanDeviceFragment;
@@ -19,6 +25,7 @@ import com.rdc.p2p.base.BaseActivity;
 import com.rdc.p2p.base.BasePresenter;
 import com.rdc.p2p.bean.ImageBean;
 import com.rdc.p2p.util.ImageUtil;
+import com.rdc.p2p.util.NetUtil;
 import com.rdc.p2p.util.UserUtil;
 
 import org.greenrobot.eventbus.EventBus;
@@ -54,7 +61,6 @@ public class LoginActivity extends BaseActivity {
         EventBus.getDefault().register(this);
         super.onCreate(savedInstanceState);
     }
-
     @Override
     protected void onDestroy() {
         EventBus.getDefault().unregister(this);
@@ -100,9 +106,14 @@ public class LoginActivity extends BaseActivity {
                     userBean.setNickName(getString(mEtNickname));
                     userBean.setUserImageId(mSelectedImageId);
                     UserUtil.saveUser(userBean);
-                    ScanDeviceFragment scanDeviceFragment = new ScanDeviceFragment();
-                    scanDeviceFragment.setCancelable(false);
-                    scanDeviceFragment.show(getSupportFragmentManager(),"progressFragment");
+                    App.setUserBean(userBean);
+                    if (NetUtil.isWifi(LoginActivity.this)){
+                        ScanDeviceFragment scanDeviceFragment = new ScanDeviceFragment();
+                        scanDeviceFragment.setCancelable(false);
+                        scanDeviceFragment.show(getSupportFragmentManager(),"progressFragment");
+                    }else {
+                        showToast("请连接WIFI！");
+                    }
                 }else {
                     showToast("昵称不能为空！");
                 }

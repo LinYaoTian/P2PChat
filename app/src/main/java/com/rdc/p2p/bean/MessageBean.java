@@ -4,6 +4,8 @@ package com.rdc.p2p.bean;
  * Created by Lin Yaotian on 2018/5/16.
  */
 public class MessageBean {
+
+    private String userIp;
     private int userImageId;
     private String nickName;
     private String message;
@@ -12,6 +14,30 @@ public class MessageBean {
     private String fileUrl;
     private int msgType;//消息类型 文件/图片/文字
     private boolean isMine;//是否是本人的消息
+
+    public PeerBean transformToPeerBean(){
+        PeerBean peerBean = new PeerBean();
+        peerBean.setRecentMessage(getMessage());
+        peerBean.setNickName(nickName);
+        peerBean.setUserImageId(userImageId);
+        peerBean.setUserIp(userIp);
+        return peerBean;
+    }
+
+    public UserBean transformToUserBean(){
+        UserBean userBean = new UserBean();
+        userBean.setUserImageId(userImageId);
+        userBean.setNickName(nickName);
+        return userBean;
+    }
+
+    public String getUserIp() {
+        return userIp == null ? "" : userIp;
+    }
+
+    public void setUserIp(String userIp) {
+        this.userIp = userIp == null ? "" : userIp;
+    }
 
     public boolean isMine() {
         return isMine;
@@ -38,6 +64,13 @@ public class MessageBean {
     }
 
     public String getMessage() {
+        if (message == null || message.equals("")){
+            if (fileUrl != null){
+                return "文件";
+            }else if (imageUrl != null){
+                return "图片";
+            }
+        }
         return message == null ? "" : message;
     }
 

@@ -1,5 +1,13 @@
 package com.rdc.p2p.activity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
@@ -13,6 +21,8 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
+import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,10 +35,13 @@ import com.rdc.p2p.base.BaseActivity;
 import com.rdc.p2p.base.BasePresenter;
 import com.rdc.p2p.fragment.PeerListFragment;
 import com.rdc.p2p.fragment.ScanDeviceFragment;
+import com.rdc.p2p.manager.SocketManager;
 import com.rdc.p2p.presenter.PeerListPresenter;
+import com.rdc.p2p.util.UserUtil;
 
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.Objects;
 
 import butterknife.BindView;
 
@@ -169,9 +182,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 mTvChat.setTextColor(getResources().getColor(R.color.lightGrey));
                 mIvPeerList.setImageResource(R.drawable.iv_peer_list_pressed);
                 mTvPeerList.setTextColor(getResources().getColor(R.color.colorPrimary));
+                Log.d(TAG, "ServerSocket="+mPeerListFragment.mPresenter.isInitServerSocket()+",SocketManager:"+ SocketManager.getInstance().toString());
                 break;
         }
     }
+
 
 //    private void initServerSocket() {
 //        try {

@@ -20,7 +20,7 @@
         android:id="@+id/tv_tip_nonePeer_fragment_peer_list"
         android:textColor="@color/colorPrimary"
         android:textSize="@dimen/text_size_normal"
-        tool:text="暂时没有其他成员哦！"
+        android:text="@string/tip_none_peers"
         android:visibility="gone"
         />
 

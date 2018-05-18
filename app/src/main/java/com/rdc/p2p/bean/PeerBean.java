@@ -1,5 +1,7 @@
 package com.rdc.p2p.bean;
 
+import com.rdc.p2p.config.Protocol;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -11,7 +13,18 @@ public class PeerBean {
     private String nickName;
     private String recentMessage;
     private String time;
-    private String ip;
+    private String userIp;
+
+    public MessageBean transformToMessageBean(){
+        MessageBean messageBean = new MessageBean();
+        messageBean.setNickName(getNickName());
+        messageBean.setUserImageId(getUserImageId());
+        messageBean.setUserIp(getUserIp());
+        messageBean.setMessage(getRecentMessage());
+        messageBean.setMsgType(Protocol.MSG);
+        messageBean.setMine(false);
+        return messageBean;
+    }
 
     @Override
     public String toString() {
@@ -20,7 +33,7 @@ public class PeerBean {
                 ", nickName='" + nickName + '\'' +
                 ", recentMessage='" + recentMessage + '\'' +
                 ", time='" + time + '\'' +
-                ", ip='" + ip + '\'' +
+                ", userIp='" + userIp + '\'' +
                 '}';
     }
 
@@ -58,11 +71,11 @@ public class PeerBean {
         this.time = time == null ? "" : time;
     }
 
-    public String getIp() {
-        return ip == null ? "" : ip;
+    public String getUserIp() {
+        return userIp == null ? "" : userIp;
     }
 
-    public void setIp(String ip) {
-        this.ip = ip == null ? "" : ip;
+    public void setUserIp(String userIp) {
+        this.userIp = userIp == null ? "" : userIp;
     }
 }

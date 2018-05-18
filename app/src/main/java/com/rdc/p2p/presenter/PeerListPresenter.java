@@ -3,6 +3,7 @@ package com.rdc.p2p.presenter;
 import android.app.Activity;
 
 import com.rdc.p2p.base.BasePresenter;
+import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.contract.PeerListContract;
 import com.rdc.p2p.model.PeerListModel;
@@ -63,12 +64,12 @@ public class PeerListPresenter extends BasePresenter<PeerListContract.View> impl
     }
 
     @Override
-    public void messageReceived(final PeerBean peerBean) {
+    public void messageReceived(final MessageBean messageBean) {
         if (isAttachView()){
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    getMvpView().messageReceived(peerBean);
+                    getMvpView().messageReceived(messageBean);
                 }
             });
         }
@@ -96,6 +97,11 @@ public class PeerListPresenter extends BasePresenter<PeerListContract.View> impl
                 }
             });
         }
+    }
+
+    @Override
+    public boolean isInitServerSocket() {
+        return model.isInitServerSocket();
     }
 
 }

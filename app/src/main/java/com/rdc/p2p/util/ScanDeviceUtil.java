@@ -30,18 +30,19 @@ public class ScanDeviceUtil {
     /** 核心池大小 **/
     private static final int CORE_POOL_SIZE = 1;
     /** 线程池最大线程数 **/
-    private static final int MAX_IMUM_POOL_SIZE = 255;
+    private static final int MAX_POOL_SIZE = 255;
 
     private String mDevAddress;// 本机IP地址-完整
     private String mLocAddress;// 局域网IP地址头,如：192.168.1.
     private Runtime mRun = Runtime.getRuntime();// 获取当前运行环境，来执行ping，相当于windows的cmd
+
     private Process mProcess = null;// 进程
     private String mPing = "ping -c 1 -w 3 ";// 其中 -c 1为发送的次数，-w 表示发送后等待响应的时间
-    private List<String> mIpList;// ping成功的IP地址
+    private CopyOnWriteArrayList<String> mIpList;// ping成功的IP地址
     private ThreadPoolExecutor mExecutor;// 线程池对象
     private static ScanDeviceUtil mScanDeviceUtil;
     private ScanDeviceUtil(){
-
+        mIpList = new CopyOnWriteArrayList<>();
     }
 
     public static ScanDeviceUtil getInstance(){
@@ -90,7 +91,7 @@ public class ScanDeviceUtil {
      * @return void
      */
     public void scan() {
-        mIpList = Collections.synchronizedList(new ArrayList<String>());
+        mIpList.clear();
         Log.d(TAG, "开始扫描设备,本机Ip为：" + mDevAddress);
         /**
          * 1.核心池大小 2.线程池最大线程数 3.表示线程没有任务执行时最多保持多久时间会终止
@@ -98,7 +99,7 @@ public class ScanDeviceUtil {
          * 5.一个阻塞队列，用来存储等待执行的任务，这个参数的选择也很重要，会对线程池的运行过程产生重大影响
          * ，一般来说，这里的阻塞队列有以下几种选择：
          */
-        mExecutor = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_IMUM_POOL_SIZE,
+        mExecutor = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_POOL_SIZE,
                 2000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(
                 CORE_POOL_SIZE));
 
@@ -116,7 +117,7 @@ public class ScanDeviceUtil {
                     if (mDevAddress.equals(currnetIp)) // 如果与本机IP地址相同,跳过
                         return;
                     try {
-                        mProcess = mRun.exec(ping);
+                        mProcess = Runtime.getRuntime().exec(ping);
                         int result = mProcess.waitFor();
 //                        Log.d(TAG, "正在扫描的IP地址为：" + currnetIp + "返回值为：" + result);
                         if (result == 0) {

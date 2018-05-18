@@ -41,18 +41,20 @@ public class ScanDeviceModel extends BaseModel implements ScanDeviceContract.Mod
                     try {
                         if (ScanDeviceUtil.getInstance().isFinish()) {// 扫描结束,开始验证
                             List<String> ipList = ScanDeviceUtil.getInstance().getIpList();
-                            Log.d("Login", "ipList："+ipList.toString());
+                            Log.d("ScanDeviceModel", "ipList："+ipList.toString());
                             mPresenter.scanDeviceSuccess(ipList);
                             break;
                         }
                     } catch (Exception e) {
                         // TODO: handle exception
+                        break;
                     }
                     try {
                         Thread.sleep(2000);
                     } catch (InterruptedException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
+                        break;
                     }
                 }
             }
