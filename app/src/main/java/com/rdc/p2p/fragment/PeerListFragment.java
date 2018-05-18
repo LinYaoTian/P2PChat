@@ -63,6 +63,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
                 case INIT_SERVER_SOCKET:
                     Log.d(TAG, "handleMessage: ");
                     mPresenter.initSocket();
+
                     break;
             }
             return true;
