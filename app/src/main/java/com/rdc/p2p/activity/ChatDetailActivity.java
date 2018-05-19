@@ -31,6 +31,8 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.util.List;
+
 import butterknife.BindView;
 
 public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implements ChatDetailContract.View {
@@ -50,7 +52,6 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     EditText mEtInput;
 
     private MsgRvAdapter mMsgRvAdapter;
-    private MessageBean mRecentSendMsg;
     private static String mPeerName;
     private static String mPeerIp;
 
@@ -109,36 +110,45 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     @Override
     protected void initListener() {
         mBtnSend.setOnClickListener(new View.OnClickListener() {
+            int i = 0;
             @Override
             public void onClick(View view) {
                 if (!TextUtils.isEmpty(getString(mEtInput))){
-                    mRecentSendMsg = new MessageBean();
-                    mRecentSendMsg.setMine(true);
-                    mRecentSendMsg.setMsgType(Protocol.MSG);
-                    mRecentSendMsg.setNickName(App.getUserBean().getNickName());
-                    mRecentSendMsg.setUserImageId(App.getUserBean().getUserImageId());
-                    mRecentSendMsg.setMessage(getString(mEtInput));
-                    presenter.sendMessage(mRecentSendMsg,mPeerIp);
+                    MessageBean messageMean = new MessageBean();
+                    messageMean.setMine(true);
+                    messageMean.setMsgType(Protocol.MSG);
+                    messageMean.setNickName(App.getUserBean().getNickName());
+                    messageMean.setUserImageId(App.getUserBean().getUserImageId());
+                    messageMean.setMessage(i+"");
+                    i++;
+                    presenter.sendMessage(messageMean,mPeerIp);
                 }
             }
         });
         mBtnSelectImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                mRecentSendMsg = new MessageBean();
-                mRecentSendMsg.setMine(true);
-                mRecentSendMsg.setMsgType(Protocol.IMAGE);
-                mRecentSendMsg.setNickName(App.getUserBean().getNickName());
-                mRecentSendMsg.setUserImageId(App.getUserBean().getUserImageId());
-                mRecentSendMsg.setMessage(getString(mEtInput));
-                presenter.sendMessage(mRecentSendMsg,mPeerIp);
+                MessageBean messageBean = new MessageBean();
+                messageBean.setMine(true);
+                messageBean.setMsgType(Protocol.IMAGE);
+                messageBean.setNickName(App.getUserBean().getNickName());
+                messageBean.setUserImageId(App.getUserBean().getUserImageId());
+                messageBean.setMessage(getString(mEtInput));
+                presenter.sendMessage(messageBean,mPeerIp);
             }
         });
     }
 
     @Override
-    public void sendSuccess() {
-        mMsgRvAdapter.appendData(mRecentSendMsg);
+    public void sendSuccess(MessageBean messageBean) {
+        Log.d(TAG, "sendSuccess: "+messageBean.toString());
+        mMsgRvAdapter.appendData(messageBean);
+        List<MessageBean> list = mMsgRvAdapter.getDataList();
+        StringBuilder s= new StringBuilder();
+        for (MessageBean bean : list) {
+            s.append(bean.getMessage()).append(",");
+        }
+        Log.d(TAG, "sendSuccess: "+s);
     }
 
     @Override
@@ -158,7 +168,6 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void receiveMessage(MessageBean messageBean){
-        Log.d(TAG, "receiveMessage: msgIp="+messageBean.getUserIp()+",mPeerIp="+mPeerIp);
         if (messageBean.getUserIp().equals(mPeerIp)){
             mMsgRvAdapter.appendData(messageBean);
         }

@@ -2,6 +2,7 @@ package com.rdc.p2p.adapter;
 
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -61,21 +62,23 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
 
         Holder(View itemView) {
             super(itemView);
-
         }
 
         @Override
         protected void bindView(MessageBean msg) {
             if (msg.isMine()){
+                mRlRight.setVisibility(View.VISIBLE);
                 mRlLeft.setVisibility(View.GONE);
                 Glide.with(itemView.getContext()).load(
                         ImageUtil.getImageResId(msg.getUserImageId())).into(mCivRightHeadImage);
                 switch (msg.getMsgType()){
                     case Protocol.MSG:
+                        mTvRightMsg.setVisibility(View.VISIBLE);
                         mTvRightMsg.setText(msg.getMessage());
                         mIvRightImage.setVisibility(View.GONE);
                         break;
                     case Protocol.IMAGE:
+                        mIvRightImage.setVisibility(View.VISIBLE);
                         Glide.with(itemView.getContext()).load(msg.getImageUrl()).into(mIvRightImage);
                         mTvRightMsg.setVisibility(View.GONE);
                         break;
@@ -84,16 +87,19 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
                         break;
                 }
             }else {
+                mRlLeft.setVisibility(View.VISIBLE);
                 mRlRight.setVisibility(View.GONE);
                 Glide.with(itemView.getContext()).load(
                         ImageUtil.getImageResId(msg.getUserImageId())).into(mCivLeftHeadImage);
                 switch (msg.getMsgType()){
                     case Protocol.MSG:
+                        mTvLeftMsg.setVisibility(View.VISIBLE);
                         mTvLeftMsg.setText(msg.getMessage());
                         mIvLeftImage.setVisibility(View.GONE);
                         break;
                     case Protocol.IMAGE:
-                        Glide.with(itemView.getContext()).load(msg.getImageUrl()).into(mIvRightImage);
+                        mIvLeftImage.setVisibility(View.VISIBLE);
+                        Glide.with(itemView.getContext()).load(msg.getImageUrl()).into(mIvLeftImage);
                         mTvLeftMsg.setVisibility(View.GONE);
                         break;
                     case Protocol.FILE:

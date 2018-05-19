@@ -23,18 +23,17 @@ public class ChatDetailModel implements ChatDetailContract.Model {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Log.d("ChatDetailModel", "msg.getMsgType()="+msg.getMsgType());
                  switch (msg.getMsgType()){
                      case Protocol.MSG:
                          if (SocketManager.getInstance().sendMsg(targetIp,msg)){
-                             mPresenter.sendSuccess();
+                             mPresenter.sendSuccess(msg);
                          }else{
                              mPresenter.sendError("发送失败!");
                          }
                          break;
                      case Protocol.IMAGE:
                          if (SocketManager.getInstance().sendImage(targetIp,msg)){
-                             mPresenter.sendSuccess();
+                             mPresenter.sendSuccess(msg);
                          }else{
                              mPresenter.sendError("发送失败!");
                          }

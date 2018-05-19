@@ -7,7 +7,7 @@ import com.rdc.p2p.bean.MessageBean;
  */
 public interface ChatDetailContract {
     interface View{
-        void sendSuccess();
+        void sendSuccess(MessageBean msg);
         void sendError(String message);
     }
 
@@ -18,7 +18,7 @@ public interface ChatDetailContract {
     interface Presenter{
         void sendMessage(MessageBean msg,String targetIp);
         void sendError(String message);
-        void sendSuccess();
+        void sendSuccess(MessageBean msg);
     }
 
 }

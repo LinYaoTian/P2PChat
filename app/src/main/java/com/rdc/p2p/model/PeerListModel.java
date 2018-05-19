@@ -152,7 +152,6 @@ public class PeerListModel implements PeerListContract.Model {
 
     @Override
     public void disconnect() {
-        mPollingSocketThread.interrupt();
         try {
             mServerSocket.close();
         } catch (IOException e) {

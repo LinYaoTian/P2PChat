@@ -15,6 +15,21 @@ public class MessageBean {
     private int msgType;//消息类型 文件/图片/文字
     private boolean isMine;//是否是本人的消息
 
+    @Override
+    public String toString() {
+        return "MessageBean{" +
+                "userIp='" + userIp + '\'' +
+                ", userImageId=" + userImageId +
+                ", nickName='" + nickName + '\'' +
+                ", message='" + getMessage() + '\'' +
+                ", time='" + time + '\'' +
+                ", imageUrl='" + imageUrl + '\'' +
+                ", fileUrl='" + fileUrl + '\'' +
+                ", msgType=" + msgType +
+                ", isMine=" + isMine +
+                '}';
+    }
+
     public PeerBean transformToPeerBean(){
         PeerBean peerBean = new PeerBean();
         peerBean.setRecentMessage(getMessage());

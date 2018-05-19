@@ -38,12 +38,12 @@ public class ChatDetailPresenter extends BasePresenter<ChatDetailContract.View> 
     }
 
     @Override
-    public void sendSuccess() {
+    public void sendSuccess(final MessageBean msg) {
         if (isAttachView()){
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    getMvpView().sendSuccess();
+                    getMvpView().sendSuccess(msg);
                 }
             });
         }

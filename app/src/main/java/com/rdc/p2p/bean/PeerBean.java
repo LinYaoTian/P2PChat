@@ -15,14 +15,14 @@ public class PeerBean {
     private String time;
     private String userIp;
 
-    public MessageBean transformToMessageBean(){
+    public MessageBean transformToMessageBean(int msgType,boolean isMine){
         MessageBean messageBean = new MessageBean();
         messageBean.setNickName(getNickName());
         messageBean.setUserImageId(getUserImageId());
         messageBean.setUserIp(getUserIp());
         messageBean.setMessage(getRecentMessage());
-        messageBean.setMsgType(Protocol.MSG);
-        messageBean.setMine(false);
+        messageBean.setMsgType(msgType);
+        messageBean.setMine(isMine);
         return messageBean;
     }
 

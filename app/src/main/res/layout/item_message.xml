@@ -19,38 +19,39 @@
             android:src="@drawable/iv_0" />
 
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="@drawable/bg_message_left"
-        android:minHeight="50dp"
-        android:orientation="horizontal"
-        android:layout_alignTop="@id/civ_head_image_left_item_message"
-        android:layout_marginTop="15dp"
-        android:layout_marginEnd="20dp"
-        android:layout_toEndOf="@id/civ_head_image_left_item_message">
-        <TextView
-            android:id="@+id/tv_text_left_item_message"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_margin="10dp"
-            android:textSize="15sp"
-            android:textColor="@color/black"
-            tools:text="鉴定完毕" />
+            android:layout_alignTop="@id/civ_head_image_left_item_message"
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="15dp"
+            android:layout_toEndOf="@id/civ_head_image_left_item_message"
+            android:background="@drawable/bg_message_left"
+            android:minHeight="50dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tv_text_left_item_message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_margin="10dp"
+                android:textColor="@color/black"
+                android:textSize="15sp"
+                tools:text="鉴定完毕" />
 
 
-        <ImageView
-            android:id="@+id/iv_image_left_item_message"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_margin="8dp"
-            tools:src="@drawable/iv_1"
-            android:scaleType="centerCrop"/>
+            <ImageView
+                android:id="@+id/iv_image_left_item_message"
+                android:layout_width="150dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_margin="8dp"
+                android:scaleType="fitCenter"
+                tools:src="@drawable/iv_15" />
 
 
-    </LinearLayout>
+        </LinearLayout>
     </RelativeLayout>
 
     <RelativeLayout
@@ -91,12 +92,12 @@
 
             <ImageView
                 android:id="@+id/iv_image_right_item_message"
-                android:layout_width="wrap_content"
+                android:layout_width="150dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_margin="8dp"
                 tools:src="@drawable/iv_4"
-                android:scaleType="centerCrop"/>
+                android:scaleType="fitCenter" />
 
 
         </LinearLayout>

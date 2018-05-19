@@ -103,7 +103,6 @@ public class SocketManager {
             dos.writeUTF(messageBean.getMessage());
         } catch (IOException e) {
             e.printStackTrace();
-
             return false;
         }
         return true;
@@ -127,6 +126,7 @@ public class SocketManager {
             byte[] bytes = new byte[size];
             inputStream.read(bytes);
             dos.write(bytes);
+            messageBean.setImageUrl(String.valueOf(getUriFromDrawableRes(App.getContxet(), R.drawable.iv_15)));
         } catch (IOException e) {
             e.printStackTrace();
             return false;

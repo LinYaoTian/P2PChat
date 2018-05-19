@@ -67,7 +67,7 @@ public abstract class BaseRecyclerViewAdapter<T> extends RecyclerView.Adapter {
 
     public void appendData(T t){
         mDataList.add(t);
-        notifyItemInserted(mDataList.size()-1);
+        notifyItemRangeChanged(mDataList.size()-1,1);
     }
 
     public List<T> getDataList(){
