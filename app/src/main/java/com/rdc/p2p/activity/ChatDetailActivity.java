@@ -2,8 +2,9 @@ package com.rdc.p2p.activity;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.support.v4.view.GravityCompat;
+import android.provider.MediaStore;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -23,8 +24,8 @@ import com.rdc.p2p.base.BaseActivity;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.contract.ChatDetailContract;
-import com.rdc.p2p.fragment.ScanDeviceFragment;
 import com.rdc.p2p.presenter.ChatDetailPresenter;
+import com.rdc.p2p.util.CameraGallaryUtil;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -39,6 +40,8 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     Toolbar mToolbar;
     @BindView(R.id.tv_title)
     TextView mTvTitle;
+    @BindView(R.id.btn_select_image_act_chat_detail)
+    Button mBtnSelectImage;
     @BindView(R.id.rv_msg_list_act_chat_detail)
     RecyclerView mRvMsgList;
     @BindView(R.id.btn_send_chat_detail)
@@ -117,6 +120,18 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     mRecentSendMsg.setMessage(getString(mEtInput));
                     presenter.sendMessage(mRecentSendMsg,mPeerIp);
                 }
+            }
+        });
+        mBtnSelectImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mRecentSendMsg = new MessageBean();
+                mRecentSendMsg.setMine(true);
+                mRecentSendMsg.setMsgType(Protocol.IMAGE);
+                mRecentSendMsg.setNickName(App.getUserBean().getNickName());
+                mRecentSendMsg.setUserImageId(App.getUserBean().getUserImageId());
+                mRecentSendMsg.setMessage(getString(mEtInput));
+                presenter.sendMessage(mRecentSendMsg,mPeerIp);
             }
         });
     }

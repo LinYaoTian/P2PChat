@@ -32,6 +32,16 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
+        <Button
+            android:id="@+id/btn_select_image_act_chat_detail"
+            android:layout_width="50dp"
+            android:layout_height="35dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginBottom="10dp"
+            android:text="图片"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
         <EditText
             android:id="@+id/et_input_act_chat_detail"
             android:layout_width="0dp"
@@ -43,7 +53,7 @@
             android:theme="@style/EditTextTheme"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/btn_send_chat_detail"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/btn_select_image_act_chat_detail"
             app:layout_constraintTop_toTopOf="parent" />
 
 

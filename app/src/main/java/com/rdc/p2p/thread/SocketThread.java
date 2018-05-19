@@ -1,5 +1,7 @@
 package com.rdc.p2p.thread;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 
 import com.rdc.p2p.app.App;
@@ -10,6 +12,7 @@ import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.contract.PeerListContract;
 import com.rdc.p2p.manager.SocketManager;
 import com.rdc.p2p.util.GsonUtil;
+import com.rdc.p2p.util.SDUtil;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -42,7 +45,7 @@ public class SocketThread implements Runnable {
             dis = new DataInputStream(socket.getInputStream());
             dos = new DataOutputStream(socket.getOutputStream());
             while (true){
-                  int type = dis.readInt();
+                int type = dis.readInt();
                 if (type == Protocol.KEEP_LIVE){
                     continue;
                 }
@@ -76,7 +79,13 @@ public class SocketThread implements Runnable {
                         presenter.messageReceived(messageBean);
                         break;
                     case Protocol.IMAGE:
-
+                        int size = dis.readInt();
+                        Log.d(TAG, "stream size="+size);
+                        byte[] bytes = new byte[size];
+                        dis.readFully(bytes);
+                        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes,0,size);
+                        Log.d(TAG, "bitmap size: "+bitmap.getByteCount());
+                        Log.d(TAG, "save: "+new SDUtil().saveFileIntoPublicSDCard(bytes,".jpg","a"));
                         break;
                     case Protocol.FILE:
 

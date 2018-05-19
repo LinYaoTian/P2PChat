@@ -1,6 +1,9 @@
 package com.rdc.p2p.model;
 
+import android.util.Log;
+
 import com.rdc.p2p.bean.MessageBean;
+import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.contract.ChatDetailContract;
 import com.rdc.p2p.manager.SocketManager;
 
@@ -20,11 +23,24 @@ public class ChatDetailModel implements ChatDetailContract.Model {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                 if (SocketManager.getInstance().sendMsg(targetIp,msg)){
-                     mPresenter.sendSuccess();
-                 }else{
-                     mPresenter.sendError("发送失败!");
+                Log.d("ChatDetailModel", "msg.getMsgType()="+msg.getMsgType());
+                 switch (msg.getMsgType()){
+                     case Protocol.MSG:
+                         if (SocketManager.getInstance().sendMsg(targetIp,msg)){
+                             mPresenter.sendSuccess();
+                         }else{
+                             mPresenter.sendError("发送失败!");
+                         }
+                         break;
+                     case Protocol.IMAGE:
+                         if (SocketManager.getInstance().sendImage(targetIp,msg)){
+                             mPresenter.sendSuccess();
+                         }else{
+                             mPresenter.sendError("发送失败!");
+                         }
+                         break;
                  }
+
             }
         }).start();
     }

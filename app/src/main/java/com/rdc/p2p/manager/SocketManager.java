@@ -1,12 +1,27 @@
 package com.rdc.p2p.manager;
 
+import android.annotation.SuppressLint;
+import android.content.ContentResolver;
+import android.content.Context;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.util.Log;
+
+import com.rdc.p2p.R;
+import com.rdc.p2p.app.App;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.UserBean;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.util.GsonUtil;
 
 import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Socket;
 import java.util.Collection;
 import java.util.Map;
@@ -76,7 +91,6 @@ public class SocketManager {
      */
     public boolean sendMsg(final String targetIp, MessageBean messageBean) {
         UserBean userBean = messageBean.transformToUserBean();
-        userBean.setUserImageId(messageBean.getUserImageId());
         Socket socket = querySocketByIp(targetIp);
         if (socket == null){
             return false;
@@ -92,6 +106,40 @@ public class SocketManager {
             return false;
         }
         return true;
+    }
+
+    public boolean sendImage(String targetIp,MessageBean messageBean){
+        UserBean userBean = messageBean.transformToUserBean();
+        Socket socket = querySocketByIp(targetIp);
+        if (socket == null){
+            return false;
+        }
+        DataOutputStream dos = null;
+        try {
+            dos = new DataOutputStream(socket.getOutputStream());
+            @SuppressLint("ResourceType") InputStream inputStream = App.getContxet().getResources().openRawResource(R.drawable.iv_15);
+            int size = inputStream.available();
+            Log.d(TAG, "sendImage: "+size);
+            dos.writeInt(Protocol.IMAGE);
+            dos.writeUTF(GsonUtil.gsonToJson(userBean));
+            dos.writeInt(size);
+            byte[] bytes = new byte[size];
+            inputStream.read(bytes);
+            dos.write(bytes);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
+    }
+
+    private Uri getUriFromDrawableRes(Context context, int id) {
+        Resources resources = context.getResources();
+        String path = ContentResolver.SCHEME_ANDROID_RESOURCE + "://"
+                + resources.getResourcePackageName(id) + "/"
+                + resources.getResourceTypeName(id) + "/"
+                + resources.getResourceEntryName(id);
+        return Uri.parse(path);
     }
 
 
