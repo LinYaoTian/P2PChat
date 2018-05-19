@@ -103,6 +103,7 @@ public class SocketManager {
             dos.writeUTF(messageBean.getMessage());
         } catch (IOException e) {
             e.printStackTrace();
+
             return false;
         }
         return true;
