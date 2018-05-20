@@ -5,7 +5,10 @@ import android.app.Activity;
 import com.rdc.p2p.base.BasePresenter;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.contract.ChatDetailContract;
+import com.rdc.p2p.manager.SocketManager;
 import com.rdc.p2p.model.ChatDetailModel;
+import com.rdc.p2p.util.ImageUtil;
+import com.zxy.tiny.callback.FileCallback;
 
 /**
  * Created by Lin Yaotian on 2018/5/17.
@@ -21,8 +24,16 @@ public class ChatDetailPresenter extends BasePresenter<ChatDetailContract.View> 
     }
 
     @Override
-    public void sendMessage(MessageBean msg,String targetIp) {
-        mModel.sendMessage(msg,targetIp);
+    public void sendMessage(final MessageBean msg, final String targetIp) {
+        ImageUtil.compressImage(msg.getImageUrl(), new FileCallback() {
+            @Override
+            public void callback(boolean isSuccess, String outfile, Throwable t) {
+                if (isSuccess){
+                    msg.setImageUrl(outfile);
+                }
+                mModel.sendMessage(msg,targetIp);
+            }
+        });
     }
 
     @Override

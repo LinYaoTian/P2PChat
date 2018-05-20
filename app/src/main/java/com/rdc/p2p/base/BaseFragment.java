@@ -18,7 +18,7 @@ import butterknife.Unbinder;
 public abstract class BaseFragment<T extends BasePresenter> extends Fragment {
     protected BaseActivity mBaseActivity;  //贴附的activity,Fragment中可能用到
     protected View mRootView;           //根view
-    public T mPresenter;
+    protected T mPresenter;
     Unbinder mUnbinder;
 
     @Override

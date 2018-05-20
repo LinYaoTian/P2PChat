@@ -5,8 +5,8 @@
     <color name="color_Accent">#FF4081</color>
     <color name="white">#ffffff</color>
     <color name="black">#000000</color>
-    <color name="lightGrey">#cdcdcd</color>
-    <color name="veryLightGrey">#dbdbdb</color>
+    <color name="bg_chat">#EBEBEB</color>
+    <color name="grey_text_or_bg">#7B8085</color>
     <color name="green">#45BF1A</color>
     <color name="green_pressed">#3aa115</color>
     <!--登录-->

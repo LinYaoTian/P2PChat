@@ -4,9 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.util.Log;
 
@@ -18,7 +15,6 @@ import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.util.GsonUtil;
 
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -98,9 +94,9 @@ public class SocketManager {
         DataOutputStream dos = null;
         try {
             dos = new DataOutputStream(socket.getOutputStream());
-            dos.writeInt(Protocol.MSG);
+            dos.writeInt(Protocol.TEXT);
             dos.writeUTF(GsonUtil.gsonToJson(userBean));
-            dos.writeUTF(messageBean.getMessage());
+            dos.writeUTF(messageBean.getText());
         } catch (IOException e) {
             e.printStackTrace();
             return false;
@@ -117,16 +113,15 @@ public class SocketManager {
         DataOutputStream dos = null;
         try {
             dos = new DataOutputStream(socket.getOutputStream());
-            @SuppressLint("ResourceType") InputStream inputStream = App.getContxet().getResources().openRawResource(R.drawable.iv_15);
-            int size = inputStream.available();
+            FileInputStream fileInputStream = new FileInputStream(messageBean.getImageUrl());
+            int size = fileInputStream.available();
             Log.d(TAG, "sendImage: "+size);
             dos.writeInt(Protocol.IMAGE);
             dos.writeUTF(GsonUtil.gsonToJson(userBean));
             dos.writeInt(size);
             byte[] bytes = new byte[size];
-            inputStream.read(bytes);
+            fileInputStream.read(bytes);
             dos.write(bytes);
-            messageBean.setImageUrl(String.valueOf(getUriFromDrawableRes(App.getContxet(), R.drawable.iv_15)));
         } catch (IOException e) {
             e.printStackTrace();
             return false;

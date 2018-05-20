@@ -1,38 +1,14 @@
 package com.rdc.p2p.util;
 
-/**
- * 1/判断SD卡是否存在(挂载);<isMounted()>.
- * 2/获取SD卡的根目录(物理绝对路径);<getAbsolutePath()>.
- * 3/获取外部公共储存文件夹的路径;<getPublicExternalSDpath()>.
- * 4/获取应用内部储存目录(跟随应用自身的文件路径);<getPrivateExternalSDpath()>.
- * 5/获取SD卡的总空间大小;<getSDSize()>.
- * 6/获取SD卡的可用(剩余)空间;<getAvailabeSize()>.
- * 7/将文件储存到SD卡上的目录里;<saveFileIntoSDCard()>.
- * 8/将文件储存到SD卡上的公共文件目录里;<saveFileIntoPublicSDCard()>.
- * 9/将文件储存到应用本身的某些类型的目录里面(私人的);<saveFileIntoPrivateSDCard()>.
- * 10/ 获取存储在SDCard中的文件;<getFileFromSDCard()>.
- * 11/在SD卡上创建新文件;<createFileInSDCard()>.
- * 12/ 在SD卡上创建新目录;<creatSDDir()>.
- * 13/判断SD卡上的文件夹是否存在;<isFileExist()>.
- * 14/将一个InputStream里面的数据写入到SD卡中 ,如:从网络上读取图片;<writeToSDFromInput()>.
- */
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
+
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 
-import android.content.Context;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.os.StatFs;
 import android.support.v4.content.FileProvider;
 
 import com.rdc.p2p.app.App;
@@ -65,6 +41,17 @@ public class SDUtil {
         } catch (IOException e) {
             e.printStackTrace();    }
         return null;
+    }
+
+    /**
+     * 删除文件
+     * @param path
+     */
+    public static void deleteFile(String path){
+        File file = new File(path);
+        if (file.exists() && file.isFile()){
+            file.delete();
+        }
     }
 
 

@@ -37,7 +37,7 @@
             android:id="@+id/v_divider"
             android:layout_width="0dp"
             android:layout_height="0.5dp"
-            android:background="@color/lightGrey"
+            android:background="@color/grey_text_or_bg"
             app:layout_constraintBottom_toTopOf="@+id/ll_bottom_left_layout_act_main"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
@@ -102,7 +102,7 @@
                 android:id="@+id/tv_chat_act_main"
                 android:gravity="center"
                 android:text="@string/chat"
-                android:textColor="@color/lightGrey"
+                android:textColor="@color/grey_text_or_bg"
                 android:textSize="@dimen/text_size_very_small"
                 android:layout_marginBottom="2dp"/>
         </LinearLayout>

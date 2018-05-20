@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:padding="10dp">
 
@@ -28,7 +29,8 @@
             android:layout_toEndOf="@id/civ_head_image_left_item_message"
             android:background="@drawable/bg_message_left"
             android:minHeight="50dp"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:id="@+id/ll_left_text_item_message">
 
             <TextView
                 android:id="@+id/tv_text_left_item_message"
@@ -39,26 +41,36 @@
                 android:textColor="@color/black"
                 android:textSize="15sp"
                 tools:text="鉴定完毕" />
-
-
-            <ImageView
-                android:id="@+id/iv_image_left_item_message"
-                android:layout_width="150dp"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_margin="8dp"
-                android:scaleType="fitCenter"
-                tools:src="@drawable/iv_15" />
-
-
         </LinearLayout>
+
+        <android.support.v7.widget.CardView
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="15dp"
+            android:layout_alignTop="@id/civ_head_image_left_item_message"
+            android:layout_toEndOf="@id/civ_head_image_left_item_message"
+            android:id="@+id/cv_image_left_item_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/iv_image_left_item_message"
+                    android:layout_width="150dp"
+                    android:layout_height="wrap_content"
+                    android:scaleType="fitCenter"
+                    android:adjustViewBounds="true"
+                    tools:src="@drawable/iv_1" />
+
+        </android.support.v7.widget.CardView>
+
+
     </RelativeLayout>
 
     <RelativeLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/rl_right_msg_item_message"
-        >
+        android:id="@+id/rl_right_msg_item_message">
 
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/civ_head_image_right_item_message"
@@ -68,6 +80,7 @@
             android:layout_alignParentEnd="true" />
 
         <LinearLayout
+            android:id="@+id/ll_right_text_item_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_message_right"
@@ -89,18 +102,29 @@
                 android:textSize="15sp"
                 tools:text="鉴定完毕" />
 
+        </LinearLayout>
+
+        <android.support.v7.widget.CardView
+            android:layout_marginEnd="20dp"
+            android:layout_marginTop="15dp"
+            android:layout_alignTop="@id/civ_head_image_right_item_message"
+            android:layout_toStartOf="@id/civ_head_image_right_item_message"
+            android:id="@+id/cv_image_right_item_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:visibility="gone">
+
 
             <ImageView
                 android:id="@+id/iv_image_right_item_message"
                 android:layout_width="150dp"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_margin="8dp"
-                tools:src="@drawable/iv_4"
-                android:scaleType="fitCenter" />
+                android:scaleType="fitCenter"
+                android:adjustViewBounds="true"
+                tools:src="@drawable/iv_1"  />
 
-
-        </LinearLayout>
+        </android.support.v7.widget.CardView>
 
 
     </RelativeLayout>

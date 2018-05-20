@@ -1,11 +1,11 @@
 package com.rdc.p2p.model;
 
-import android.util.Log;
-
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.contract.ChatDetailContract;
 import com.rdc.p2p.manager.SocketManager;
+import com.rdc.p2p.util.ImageUtil;
+import com.zxy.tiny.callback.FileCallback;
 
 /**
  * Created by Lin Yaotian on 2018/5/17.
@@ -24,7 +24,7 @@ public class ChatDetailModel implements ChatDetailContract.Model {
             @Override
             public void run() {
                  switch (msg.getMsgType()){
-                     case Protocol.MSG:
+                     case Protocol.TEXT:
                          if (SocketManager.getInstance().sendMsg(targetIp,msg)){
                              mPresenter.sendSuccess(msg);
                          }else{

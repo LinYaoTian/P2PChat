@@ -8,7 +8,7 @@ public class MessageBean {
     private String userIp;
     private int userImageId;
     private String nickName;
-    private String message;
+    private String text;
     private String time;
     private String imageUrl;
     private String fileUrl;
@@ -21,7 +21,7 @@ public class MessageBean {
                 "userIp='" + userIp + '\'' +
                 ", userImageId=" + userImageId +
                 ", nickName='" + nickName + '\'' +
-                ", message='" + getMessage() + '\'' +
+                ", text='" + getText() + '\'' +
                 ", time='" + time + '\'' +
                 ", imageUrl='" + imageUrl + '\'' +
                 ", fileUrl='" + fileUrl + '\'' +
@@ -32,7 +32,7 @@ public class MessageBean {
 
     public PeerBean transformToPeerBean(){
         PeerBean peerBean = new PeerBean();
-        peerBean.setRecentMessage(getMessage());
+        peerBean.setRecentMessage(getText());
         peerBean.setNickName(nickName);
         peerBean.setUserImageId(userImageId);
         peerBean.setUserIp(userIp);
@@ -78,19 +78,19 @@ public class MessageBean {
         this.nickName = nickName == null ? "" : nickName;
     }
 
-    public String getMessage() {
-        if (message == null || message.equals("")){
+    public String getText() {
+        if (text == null || text.equals("")){
             if (fileUrl != null){
                 return "文件";
             }else if (imageUrl != null){
                 return "图片";
             }
         }
-        return message == null ? "" : message;
+        return text == null ? "" : text;
     }
 
-    public void setMessage(String message) {
-        this.message = message == null ? "" : message;
+    public void setText(String text) {
+        this.text = text == null ? "" : text;
     }
 
     public String getTime() {

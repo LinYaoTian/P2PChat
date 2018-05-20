@@ -19,7 +19,7 @@
         android:id="@+id/v_divider"
         android:layout_width="0dp"
         android:layout_height="0.5dp"
-        android:background="@color/lightGrey"
+        android:background="@color/grey_text_or_bg"
         app:layout_constraintBottom_toTopOf="@id/constraintLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
@@ -30,30 +30,20 @@
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <Button
-            android:id="@+id/btn_select_image_act_chat_detail"
-            android:layout_width="50dp"
-            android:layout_height="35dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginBottom="10dp"
-            android:text="图片"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        android:background="@color/white">
 
         <EditText
             android:id="@+id/et_input_act_chat_detail"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="5dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="5dp"
             android:maxLines="3"
             android:theme="@style/EditTextTheme"
-            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/iv_take_photo_act_chat_detail"
             app:layout_constraintEnd_toStartOf="@+id/btn_send_chat_detail"
-            app:layout_constraintStart_toEndOf="@+id/btn_select_image_act_chat_detail"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
 
@@ -61,13 +51,52 @@
             android:id="@+id/btn_send_chat_detail"
             android:layout_width="50dp"
             android:layout_height="35dp"
-            android:layout_marginBottom="10dp"
+            android:layout_marginBottom="8dp"
             android:layout_marginEnd="5dp"
+            android:layout_marginTop="8dp"
             android:background="@drawable/bg_send"
-            android:text="发送"
+            android:text="@string/send"
+
             android:textColor="@color/white"
+            app:layout_constraintBottom_toBottomOf="@+id/et_input_act_chat_detail"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/iv_take_photo_act_chat_detail"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginBottom="4dp"
+            android:layout_marginTop="2dp"
+            android:src="@drawable/bg_take_photo"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:layout_constraintEnd_toStartOf="@+id/iv_photo_album_act_chat_detail"
+            app:layout_constraintHorizontal_chainStyle="spread"
+            app:layout_constraintStart_toStartOf="parent"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <ImageView
+            android:id="@+id/iv_photo_album_act_chat_detail"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/bg_photo_album"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_take_photo_act_chat_detail"
+            app:layout_constraintEnd_toStartOf="@+id/iv_file_act_chat_detail"
+            app:layout_constraintStart_toEndOf="@+id/iv_take_photo_act_chat_detail"
+            android:clickable="true"
+            android:focusable="true"/>
+
+        <ImageView
+            android:id="@+id/iv_file_act_chat_detail"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/bg_file"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_take_photo_act_chat_detail"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/iv_photo_album_act_chat_detail"
+            android:clickable="true"
+            android:focusable="true"/>
 
 
     </android.support.constraint.ConstraintLayout>
@@ -76,12 +105,17 @@
         android:id="@+id/rv_msg_list_act_chat_detail"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@color/veryLightGrey"
+        android:background="@color/bg_chat"
         app:layout_constraintBottom_toTopOf="@+id/v_divider"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/toolbar">
 
     </android.support.v7.widget.RecyclerView>
+
+
+
+
+
 
 </android.support.constraint.ConstraintLayout>

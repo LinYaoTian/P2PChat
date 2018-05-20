@@ -12,4 +12,5 @@
     <string name="close">关闭</string>
     <string name="loadingPeersInfo">加载成员信息</string>
     <string name="tip_none_peers">暂时没有其他成员哦！</string>
+    <string name="send">发送</string>
 </resources>

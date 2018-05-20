@@ -2,6 +2,7 @@ package com.rdc.p2p.contract;
 
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
+import com.rdc.p2p.listener.ServerSocketInitCallback;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ public interface PeerListContract {
     }
 
     interface Model{
-        void initServerSocket();
+        void initServerSocket(ServerSocketInitCallback callback);
         void linkPeers(List<PeerBean> list);
         void disconnect();
         boolean isInitServerSocket();
@@ -27,14 +28,14 @@ public interface PeerListContract {
 
     interface Presenter{
         void disconnect();
-        void initSocket();
+        void initSocket(List<PeerBean> list);
         void linkPeers(List<PeerBean> list);
         void updatePeerList(List<PeerBean> list);
         void addPeer(PeerBean peerBean);
         void messageReceived(MessageBean messageBean);
         void removePeer(String ip);
         void serverSocketError(String msg);
-        boolean isInitServerSocket();
+        boolean isServerSocketConnected();
     }
 
 }

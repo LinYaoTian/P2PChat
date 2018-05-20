@@ -6,6 +6,7 @@ import com.rdc.p2p.base.BasePresenter;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.contract.PeerListContract;
+import com.rdc.p2p.listener.ServerSocketInitCallback;
 import com.rdc.p2p.model.PeerListModel;
 
 import java.util.List;
@@ -30,8 +31,13 @@ public class PeerListPresenter extends BasePresenter<PeerListContract.View> impl
     }
 
     @Override
-    public void initSocket() {
-        model.initServerSocket();
+    public void initSocket(final List<PeerBean> list) {
+        model.initServerSocket(new ServerSocketInitCallback() {
+            @Override
+            public void initSuccess() {
+                model.linkPeers(list);
+            }
+        });
     }
 
     @Override
@@ -100,7 +106,7 @@ public class PeerListPresenter extends BasePresenter<PeerListContract.View> impl
     }
 
     @Override
-    public boolean isInitServerSocket() {
+    public boolean isServerSocketConnected() {
         return model.isInitServerSocket();
     }
 

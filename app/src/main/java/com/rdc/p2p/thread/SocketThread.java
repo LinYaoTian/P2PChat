@@ -30,13 +30,11 @@ public class SocketThread implements Runnable {
     private DataOutputStream dos = null;//发送消息
     private PeerListContract.Presenter presenter;
     private String targetIp;
-    private int i;
 
 
     public SocketThread(Socket socket, PeerListContract.Presenter presenter){
         this.socket = socket;
         this.presenter = presenter;
-        i = 0;
         targetIp = socket.getInetAddress().getHostAddress();
     }
 
@@ -74,9 +72,9 @@ public class SocketThread implements Runnable {
                         Log.d(TAG, "CONNECT_RESPONSE");
                         presenter.addPeer(peer);
                         break;
-                    case Protocol.MSG:
+                    case Protocol.TEXT:
                         peer.setRecentMessage(dis.readUTF());
-                        MessageBean messageBean = peer.transformToMessageBean(Protocol.MSG,false);
+                        MessageBean messageBean = peer.transformToMessageBean(Protocol.TEXT,false);
                         Log.d(TAG, "type:"+type+",user:"+u+",messageBean:"+messageBean.toString());
                         presenter.messageReceived(messageBean);
                         break;
@@ -87,8 +85,7 @@ public class SocketThread implements Runnable {
                         Bitmap bitmap = BitmapFactory.decodeByteArray(bytes,0,size);
                         Log.d(TAG, "type:"+type+",user:"+u+",bitmap size: "+bitmap.getByteCount());
                         MessageBean messageBean1 = peer.transformToMessageBean(Protocol.IMAGE,false);
-                        messageBean1.setImageUrl(String.valueOf(SDUtil.saveBitmap(bitmap,"testSocket"+i)));
-                        i++;
+                        messageBean1.setImageUrl(String.valueOf(SDUtil.saveBitmap(bitmap,System.currentTimeMillis()+"")));
                         presenter.messageReceived(messageBean1);
                         break;
                     case Protocol.FILE:

@@ -2,4 +2,12 @@
 <paths
     xmlns:android="http://schemas.android.com/apk/res/android">
     <external-path name="my_images" path="P2P/"/>
+    <external-files-path
+        name="my_image"
+        path="P2PChat/"/>
+    <external-cache-path
+        name="my_images"
+        path="P2P/"/>
+    <root-path name="name" path="" />
+
 </paths>

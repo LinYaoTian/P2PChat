@@ -2,15 +2,7 @@ package com.rdc.p2p.activity;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.pm.PackageManager;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.wifi.WifiInfo;
-import android.net.wifi.WifiManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
@@ -19,14 +11,12 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
-import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
-import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -41,12 +31,9 @@ import com.rdc.p2p.base.BasePresenter;
 import com.rdc.p2p.fragment.PeerListFragment;
 import com.rdc.p2p.fragment.ScanDeviceFragment;
 import com.rdc.p2p.manager.SocketManager;
-import com.rdc.p2p.presenter.PeerListPresenter;
-import com.rdc.p2p.util.UserUtil;
 
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.util.Objects;
 
 import butterknife.BindView;
 
@@ -179,9 +166,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()){
             case R.id.menu_search:
-                ScanDeviceFragment mScanDeviceFragment = new ScanDeviceFragment();
-                mScanDeviceFragment.setCancelable(false);
-                mScanDeviceFragment.show(getSupportFragmentManager(),"scanDevice");
+                if (mPeerListFragment.isServerSocketConnected()){
+                    ScanDeviceFragment mScanDeviceFragment = new ScanDeviceFragment();
+                    mScanDeviceFragment.setCancelable(false);
+                    mScanDeviceFragment.show(getSupportFragmentManager(),"scanDevice");
+                }
                 break;
             case android.R.id.home:
                 mDrawerLayout.openDrawer(GravityCompat.START);
@@ -203,14 +192,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 mIvChat.setImageResource(R.drawable.iv_chat_pressed);
                 mTvChat.setTextColor(getResources().getColor(R.color.colorPrimary));
                 mIvPeerList.setImageResource(R.drawable.iv_peer_list_normal);
-                mTvPeerList.setTextColor(getResources().getColor(R.color.lightGrey));
+                mTvPeerList.setTextColor(getResources().getColor(R.color.grey_text_or_bg));
                 break;
             case R.id.ll_bottom_left_layout_act_main:
                 mIvChat.setImageResource(R.drawable.iv_chat_normal);
-                mTvChat.setTextColor(getResources().getColor(R.color.lightGrey));
+                mTvChat.setTextColor(getResources().getColor(R.color.grey_text_or_bg));
                 mIvPeerList.setImageResource(R.drawable.iv_peer_list_pressed);
                 mTvPeerList.setTextColor(getResources().getColor(R.color.colorPrimary));
-                Log.d(TAG, "ServerSocket="+mPeerListFragment.mPresenter.isInitServerSocket()+",SocketManager:"+ SocketManager.getInstance().toString());
+                Log.d(TAG, "SocketManager:"+ SocketManager.getInstance().toString());
                 break;
         }
     }

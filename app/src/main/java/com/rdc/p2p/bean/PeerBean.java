@@ -1,7 +1,5 @@
 package com.rdc.p2p.bean;
 
-import com.rdc.p2p.config.Protocol;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -20,7 +18,7 @@ public class PeerBean {
         messageBean.setNickName(getNickName());
         messageBean.setUserImageId(getUserImageId());
         messageBean.setUserIp(getUserIp());
-        messageBean.setMessage(getRecentMessage());
+        messageBean.setText(getRecentMessage());
         messageBean.setMsgType(msgType);
         messageBean.setMine(isMine);
         return messageBean;

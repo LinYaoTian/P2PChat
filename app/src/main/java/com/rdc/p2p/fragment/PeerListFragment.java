@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -25,7 +27,6 @@ import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.contract.PeerListContract;
 import com.rdc.p2p.eventBean.IpDeviceEventBean;
 import com.rdc.p2p.listener.OnClickRecyclerViewListener;
-import com.rdc.p2p.manager.SocketManager;
 import com.rdc.p2p.presenter.PeerListPresenter;
 
 import org.greenrobot.eventbus.EventBus;
@@ -33,8 +34,8 @@ import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 import butterknife.BindView;
 
@@ -61,8 +62,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
         public boolean handleMessage(Message message) {
             switch (message.what){
                 case INIT_SERVER_SOCKET:
-                    Log.d(TAG, "handleMessage: ");
-                    mPresenter.initSocket();
+                    mPresenter.initSocket(new ArrayList<PeerBean>());
                     break;
             }
             return true;
@@ -84,8 +84,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mPresenter.initSocket();
-        mPresenter.linkPeers(mPeerList);
+        mPresenter.initSocket(mPeerList);
         EventBus.getDefault().register(this);
         mWifiReceiver = new WifiReceiver();
         IntentFilter filter = new IntentFilter();
@@ -101,7 +100,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
         mPresenter.disconnect();
     }
 
-    @Subscribe(threadMode = ThreadMode.MAIN)
+    @Subscribe(sticky = true,threadMode = ThreadMode.MAIN)
     public void scanDeviceFinished(IpDeviceEventBean deviceEventBean){
         List<String> list = deviceEventBean.getList();
         mPeerList.clear();
@@ -110,7 +109,11 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
             peerBean.setUserIp(s);
             mPeerList.add(peerBean);
         }
-        mPresenter.linkPeers(mPeerList);
+        if (mPresenter.isServerSocketConnected()){
+            mPresenter.linkPeers(mPeerList);
+        }else {
+            showToast("ServerSocket断开连接！");
+        }
     }
 
     public void setPeerList(List<String> list){
@@ -119,7 +122,10 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
             peerBean.setUserIp(s);
             mPeerList.add(peerBean);
         }
-        Log.d(TAG, "getPeerList: ");
+    }
+
+    public boolean isServerSocketConnected(){
+        return mPresenter.isServerSocketConnected();
     }
 
     @Override
@@ -130,6 +136,9 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     @Override
     protected void initView() {
         mPeerListRvAdapter = new PeerListRvAdapter();
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(mBaseActivity,DividerItemDecoration.VERTICAL);
+        dividerItemDecoration.setDrawable(Objects.requireNonNull(ContextCompat.getDrawable(mBaseActivity, R.drawable.bg_divider)));
+        mRvPeerList.addItemDecoration(dividerItemDecoration);
         mRvPeerList.setLayoutManager(new LinearLayoutManager(mBaseActivity,LinearLayoutManager.VERTICAL,false));
         mRvPeerList.setAdapter(mPeerListRvAdapter);
     }
@@ -158,6 +167,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     @Override
     public void updatePeerList(List<PeerBean> list) {
         if (list.size() == 0){
+            Log.d(TAG, "updatePeerList: size=0");
             mRvPeerList.setVisibility(View.GONE);
             mLlLoadingPeersInfo.setVisibility(View.GONE);
             mTvTipNonePeer.setVisibility(View.VISIBLE);
@@ -171,7 +181,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
 
     @Override
     public void messageReceived(MessageBean messageBean) {
-        EventBus.getDefault().post(messageBean);
+        EventBus.getDefault().postSticky(messageBean);
         List<PeerBean> list = mPeerListRvAdapter.getDataList();
         PeerBean peerBean = messageBean.transformToPeerBean();
         for (int i = 0; i < list.size(); i++) {
@@ -186,6 +196,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
 
     @Override
     public void addPeer(PeerBean peerBean) {
+        Log.d(TAG, "addPeer: ");
         mRvPeerList.setVisibility(View.VISIBLE);
         mLlLoadingPeersInfo.setVisibility(View.GONE);
         mTvTipNonePeer.setVisibility(View.GONE);
@@ -239,7 +250,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
                 case WifiManager.WIFI_STATE_ENABLED:
                     Log.d(TAG, "打开");
                     //已打开
-                    if (!mPresenter.isInitServerSocket()){
+                    if (!mPresenter.isServerSocketConnected()){
                         mHandler.sendEmptyMessage(INIT_SERVER_SOCKET);
                     }
                     break;

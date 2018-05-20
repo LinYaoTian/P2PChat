@@ -1,12 +1,13 @@
 package com.rdc.p2p.adapter;
 
 import android.support.annotation.NonNull;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -58,6 +59,14 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
         ImageView mIvLeftImage;
         @BindView(R.id.iv_image_right_item_message)
         ImageView mIvRightImage;
+        @BindView(R.id.ll_left_text_item_message)
+        LinearLayout mLlLeftText;
+        @BindView(R.id.ll_right_text_item_message)
+        LinearLayout mLlRightText;
+        @BindView(R.id.cv_image_left_item_message)
+        CardView mCvLeftImage;
+        @BindView(R.id.cv_image_right_item_message)
+        CardView mCvRightImage;
 
 
         Holder(View itemView) {
@@ -72,15 +81,15 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
                 Glide.with(itemView.getContext()).load(
                         ImageUtil.getImageResId(msg.getUserImageId())).into(mCivRightHeadImage);
                 switch (msg.getMsgType()){
-                    case Protocol.MSG:
-                        mTvRightMsg.setVisibility(View.VISIBLE);
-                        mTvRightMsg.setText(msg.getMessage());
-                        mIvRightImage.setVisibility(View.GONE);
+                    case Protocol.TEXT:
+                        mLlRightText.setVisibility(View.VISIBLE);
+                        mTvRightMsg.setText(msg.getText());
+                        mCvRightImage.setVisibility(View.GONE);
                         break;
                     case Protocol.IMAGE:
-                        mIvRightImage.setVisibility(View.VISIBLE);
+                        mCvRightImage.setVisibility(View.VISIBLE);
                         Glide.with(itemView.getContext()).load(msg.getImageUrl()).into(mIvRightImage);
-                        mTvRightMsg.setVisibility(View.GONE);
+                        mLlRightText.setVisibility(View.GONE);
                         break;
                     case Protocol.FILE:
 
@@ -92,15 +101,15 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
                 Glide.with(itemView.getContext()).load(
                         ImageUtil.getImageResId(msg.getUserImageId())).into(mCivLeftHeadImage);
                 switch (msg.getMsgType()){
-                    case Protocol.MSG:
-                        mTvLeftMsg.setVisibility(View.VISIBLE);
-                        mTvLeftMsg.setText(msg.getMessage());
-                        mIvLeftImage.setVisibility(View.GONE);
+                    case Protocol.TEXT:
+                        mLlLeftText.setVisibility(View.VISIBLE);
+                        mTvLeftMsg.setText(msg.getText());
+                        mCvLeftImage.setVisibility(View.GONE);
                         break;
                     case Protocol.IMAGE:
-                        mIvLeftImage.setVisibility(View.VISIBLE);
+                        mCvLeftImage.setVisibility(View.VISIBLE);
                         Glide.with(itemView.getContext()).load(msg.getImageUrl()).into(mIvLeftImage);
-                        mTvLeftMsg.setVisibility(View.GONE);
+                        mLlLeftText.setVisibility(View.GONE);
                         break;
                     case Protocol.FILE:
 
