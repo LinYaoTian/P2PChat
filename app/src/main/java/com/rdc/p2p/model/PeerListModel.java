@@ -1,22 +1,24 @@
 package com.rdc.p2p.model;
 
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.os.Message;
 import android.util.Log;
 
 import com.rdc.p2p.app.App;
+import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.contract.PeerListContract;
 import com.rdc.p2p.listener.ServerSocketInitCallback;
 import com.rdc.p2p.manager.SocketManager;
 import com.rdc.p2p.thread.SocketThread;
-import com.rdc.p2p.util.GsonUtil;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -37,7 +39,7 @@ public class PeerListModel implements PeerListContract.Model {
     /**
      * 核心池大小
      **/
-    private static final int CORE_POOL_SIZE = 1;
+    private static final int CORE_POOL_SIZE = 255;
     /**
      * 线程池最大线程数
      **/
@@ -52,6 +54,7 @@ public class PeerListModel implements PeerListContract.Model {
     public PeerListModel(PeerListContract.Presenter presenter) {
         mPresenter = presenter;
         isInitServerSocket = new AtomicBoolean(false);
+
     }
 
     @Override
@@ -69,7 +72,7 @@ public class PeerListModel implements PeerListContract.Model {
                     return;
                 }
                 mExecutor = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_IMUM_POOL_SIZE,
-                        1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(
+                        2000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(
                         CORE_POOL_SIZE));
                 isInitServerSocket.set(true);
                 while (true) {
@@ -77,11 +80,16 @@ public class PeerListModel implements PeerListContract.Model {
                     try {
                         Log.d(TAG, "等待socket连接");
                         socket = mServerSocket.accept();
-                        Log.d(TAG, "接收到一个socket连接,ip:" + socket.getInetAddress().getHostAddress());
-                        SocketManager.getInstance().addSocket(socket.getInetAddress().getHostAddress(), socket);
-                        mExecutor.execute(new SocketThread(socket, mPresenter));
+                        String ip = socket.getInetAddress().getHostAddress();
+                        Log.d(TAG, "接收到一个socket连接,ip:" + ip);
+                        SocketManager socketManager = SocketManager.getInstance();
+                        SocketThread socketThread = new SocketThread(socket,mPresenter);
+                        socketManager.addSocket(ip, socket);
+                        socketManager.addSocketThread(ip,socketThread);
+                        mExecutor.execute(socketThread);
                     } catch (IOException e) {
                         e.printStackTrace();
+                        Log.d(TAG, "mServerSocket.accept() error !");
                         break;
                     }
                 }
@@ -99,44 +107,81 @@ public class PeerListModel implements PeerListContract.Model {
     @Override
     public void linkPeers(final List<PeerBean> list) {
         Log.d(TAG, "linkPeers: " + list.toString());
-                for (final PeerBean peerBean : list) {
-                    if (SocketManager.getInstance().isClosed(peerBean.getUserIp())) {
-                        new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                DataOutputStream dos = null;
-                                Socket socket = null;
-                                try {
-                                    socket = new Socket(peerBean.getUserIp(), 3000);
-                                    Log.d(TAG, "linkPeers: ip"+peerBean.getUserIp()+"success !");
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                    Log.d(TAG, "linkPeer ip = " + peerBean.getUserIp() + ",连接 Socket 失败");
-                                    return;
-                                }
-                                SocketManager.getInstance().addSocket(peerBean.getUserIp(), socket);
-                                mExecutor.execute(new SocketThread(socket, mPresenter));
-                                try {
-                                    String userGson = GsonUtil.gsonToJson(App.getUserBean());
-                                    dos = new DataOutputStream(socket.getOutputStream());
-                                    dos.writeInt(Protocol.CONNECT);
-                                    dos.writeUTF(userGson);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                    Log.d(TAG, "linkPeer ip = " + peerBean.getUserIp() + ",发送 Protocol.CONNECT 请求失败!");
-                                }
-                            }
-                        }).start();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true){
+                    if (!isInitServerSocket()){
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                            break;
+                        }
                     }
                 }
-//                try {
-//                    Thread.sleep(2000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//                if (SocketManager.getInstance().socketNum() == 0) {
-//                    mPresenter.updatePeerList(new ArrayList<PeerBean>());
-//                }
+            }
+        }).start();
+        for (final PeerBean peerBean : list) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        linkSocket(peerBean);
+                    }
+                }).start();
+        }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (SocketManager.getInstance().socketNum() == 0) {
+                    mPresenter.updatePeerList(new ArrayList<PeerBean>());
+                }
+            }
+        }).start();
+    }
+
+    @Override
+    public void linkPeer(final PeerBean peerBean) {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                if (linkSocket(peerBean)){
+                    mPresenter.linkPeerSuccess(peerBean);
+                }else {
+                    mPresenter.linkPeerError("建立Socket连接失败，对方已退出网络或网络错误！");
+                }
+            }
+        }).start();
+    }
+
+    private boolean linkSocket(PeerBean peerBean) {
+        DataOutputStream dos = null;
+        Socket socket = null;
+        String ip = peerBean.getUserIp();
+        try {
+            socket = new Socket(ip, 3000);
+            Log.d(TAG, "linkPeers: ip"+ip+"success !");
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.d(TAG, "linkPeer ip = " + ip + ",连接 Socket 失败");
+            return false;
+        }
+        SocketManager socketManager = SocketManager.getInstance();
+        socketManager.addSocket(ip, socket);
+        SocketThread socketThread = new SocketThread(socket,mPresenter);
+        socketManager.addSocketThread(ip,socketThread);
+        mExecutor.execute(socketThread);
+        //发送连接请求
+        MessageBean messageBean = new MessageBean();
+        messageBean.setMsgType(Protocol.CONNECT);
+        messageBean.setNickName(App.getUserBean().getNickName());
+        messageBean.setUserImageId(App.getUserBean().getUserImageId());
+        return socketThread.sendMsg(messageBean);
     }
 
     @Override

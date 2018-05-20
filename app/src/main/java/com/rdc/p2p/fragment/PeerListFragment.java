@@ -27,6 +27,7 @@ import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.contract.PeerListContract;
 import com.rdc.p2p.eventBean.IpDeviceEventBean;
 import com.rdc.p2p.listener.OnClickRecyclerViewListener;
+import com.rdc.p2p.manager.SocketManager;
 import com.rdc.p2p.presenter.PeerListPresenter;
 
 import org.greenrobot.eventbus.EventBus;
@@ -149,7 +150,12 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
             @Override
             public void onItemClick(int position) {
                 PeerBean peerBean = mPeerListRvAdapter.getDataList().get(position);
-                ChatDetailActivity.actionStart(mBaseActivity,peerBean.getUserIp(),peerBean.getNickName());
+                if (SocketManager.getInstance().isClosed(peerBean.getUserIp())){
+                    showToast("正在建立Socket连接！");
+                    mPresenter.linkPeer(peerBean);
+                }else {
+                    ChatDetailActivity.actionStart(mBaseActivity,peerBean.getUserIp(),peerBean.getNickName());
+                }
             }
 
             @Override
@@ -196,7 +202,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
 
     @Override
     public void addPeer(PeerBean peerBean) {
-        Log.d(TAG, "addPeer: ");
+        Log.d(TAG, "addPeer: "+peerBean.getUserIp());
         mRvPeerList.setVisibility(View.VISIBLE);
         mLlLoadingPeersInfo.setVisibility(View.GONE);
         mTvTipNonePeer.setVisibility(View.GONE);
@@ -241,6 +247,16 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
         mRvPeerList.setVisibility(View.GONE);
         mLlLoadingPeersInfo.setVisibility(View.GONE);
         mTvTipNonePeer.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    public void linkPeerSuccess(PeerBean peerBean) {
+        ChatDetailActivity.actionStart(mBaseActivity,peerBean.getUserIp(),peerBean.getNickName());
+    }
+
+    @Override
+    public void linkPeerError(String message) {
+        showToast(message);
     }
 
     public class WifiReceiver extends BroadcastReceiver {

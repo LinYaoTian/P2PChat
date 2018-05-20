@@ -1,23 +1,16 @@
 package com.rdc.p2p.manager;
 
-import android.annotation.SuppressLint;
-import android.content.ContentResolver;
-import android.content.Context;
-import android.content.res.Resources;
-import android.net.Uri;
 import android.util.Log;
 
-import com.rdc.p2p.R;
-import com.rdc.p2p.app.App;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.UserBean;
 import com.rdc.p2p.config.Protocol;
+import com.rdc.p2p.thread.SocketThread;
 import com.rdc.p2p.util.GsonUtil;
 
 import java.io.DataOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 import java.util.Collection;
 import java.util.Map;
@@ -34,13 +27,14 @@ public class SocketManager {
     /**
      * 核心池大小
      **/
-    private static final int CORE_POOL_SIZE = 1;
+    private static final int CORE_POOL_SIZE = 255;
     /**
      * 线程池最大线程数
      **/
     private static final int MAX_IMUM_POOL_SIZE = 255;
 
     private ConcurrentHashMap<String,Socket> mClients;//与客户端的连接集合
+    private ConcurrentHashMap<String,SocketThread> mSocketThreads;
     private static SocketManager mSocketManager = null;
 
     @Override
@@ -50,14 +44,21 @@ public class SocketManager {
         for (Socket socket : socketCollection) {
             s.append(socket.isClosed()).append(",");
         }
+        Collection<SocketThread> socketThreads = mSocketThreads.values();
+        StringBuilder s1 = new StringBuilder();
+        for (SocketThread socketThread : socketThreads) {
+            s1.append(socketThread.getState()).append(",");
+        }
+
         return "SocketManager{" +
                 "socketIp:"+mClients.keySet()+","+
-                "isClosed:"+s+
+                "isClosed:"+s1+
                 '}';
     }
 
     private SocketManager(){
         mClients = new ConcurrentHashMap<>();
+        mSocketThreads = new ConcurrentHashMap<>();
     }
 
     public static SocketManager getInstance(){
@@ -69,6 +70,29 @@ public class SocketManager {
             }
         }
         return mSocketManager;
+    }
+
+    public SocketThread getSocketThreadByIp(String ip){
+        SocketThread socketThread = mSocketThreads.get(ip);
+        if (socketThread == null){
+            mSocketThreads.remove(ip);
+            return null;
+        }
+        return socketThread;
+    }
+
+    public void removeSocketThreadByIp(String ip){
+        SocketThread socketThread = mSocketThreads.remove(ip);
+        if (socketThread != null){
+            socketThread.interrupt();
+        }
+    }
+
+    public void addSocketThread(String ip,SocketThread socketThread){
+        if (mSocketThreads.containsKey(ip)){
+            removeSocketByIp(ip);
+        }
+        mSocketThreads.put(ip, socketThread);
     }
 
     public Set<Map.Entry<String, Socket>> getSocketSet(){
@@ -129,29 +153,26 @@ public class SocketManager {
         return true;
     }
 
-    private Uri getUriFromDrawableRes(Context context, int id) {
-        Resources resources = context.getResources();
-        String path = ContentResolver.SCHEME_ANDROID_RESOURCE + "://"
-                + resources.getResourcePackageName(id) + "/"
-                + resources.getResourceTypeName(id) + "/"
-                + resources.getResourceEntryName(id);
-        return Uri.parse(path);
-    }
-
 
     public void destroy(){
-        Set<Map.Entry<String, Socket>> entry = mClients.entrySet();
-        for (Map.Entry<String, Socket> entry1 : entry) {
-            try {
-                Socket socket = entry1.getValue();
-                if (socket != null){
+        Collection<Socket> socketCollection = mClients.values();
+        for (Socket socket : socketCollection) {
+            if (socket != null){
+                try {
                     socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
         mClients.clear();
+        Collection<SocketThread> socketThreadCollection = mSocketThreads.values();
+        for (SocketThread socketThread : socketThreadCollection) {
+            if (socketThread != null){
+                socketThread.interrupt();
+            }
+        }
+        mSocketThreads.clear();
     }
 
     /**
@@ -207,9 +228,9 @@ public class SocketManager {
             mClients.put(ip, s);
         }else {
             try {
-                Socket socket1 = mClients.replace(ip,s);
-                if (socket1 != null){
-                    socket1.close();
+                Socket oldSocket = mClients.replace(ip,s);
+                if (oldSocket != null){
+                    oldSocket.close();
                 }
             } catch (IOException e) {
                 e.printStackTrace();

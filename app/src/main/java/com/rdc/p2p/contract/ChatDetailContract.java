@@ -1,6 +1,7 @@
 package com.rdc.p2p.contract;
 
 import com.rdc.p2p.bean.MessageBean;
+import com.rdc.p2p.presenter.PeerListPresenter;
 
 /**
  * Created by Lin Yaotian on 2018/5/17.

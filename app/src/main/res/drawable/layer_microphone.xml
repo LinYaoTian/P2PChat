@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/bg_normal" android:drawable="@drawable/iv_microphone_normal"/>
+    <item android:id="@+id/bg_recoding">
+        <clip
+            android:clipOrientation="vertical"
+            android:drawable="@drawable/iv_microphone_recoding"
+            android:gravity="bottom"/>
+    </item>
+
+</layer-list>

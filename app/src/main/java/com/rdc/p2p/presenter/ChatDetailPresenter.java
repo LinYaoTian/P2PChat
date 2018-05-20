@@ -36,6 +36,7 @@ public class ChatDetailPresenter extends BasePresenter<ChatDetailContract.View> 
         });
     }
 
+
     @Override
     public void sendError(final String message) {
         if (isAttachView()){

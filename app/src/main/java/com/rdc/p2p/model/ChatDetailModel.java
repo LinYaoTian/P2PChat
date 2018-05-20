@@ -1,11 +1,23 @@
 package com.rdc.p2p.model;
 
+import android.annotation.SuppressLint;
+
 import com.rdc.p2p.bean.MessageBean;
-import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.contract.ChatDetailContract;
 import com.rdc.p2p.manager.SocketManager;
-import com.rdc.p2p.util.ImageUtil;
-import com.zxy.tiny.callback.FileCallback;
+import com.rdc.p2p.thread.SocketThread;
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
+import io.reactivex.Observer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.BiFunction;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * Created by Lin Yaotian on 2018/5/17.
@@ -13,34 +25,39 @@ import com.zxy.tiny.callback.FileCallback;
 public class ChatDetailModel implements ChatDetailContract.Model {
 
     private ChatDetailContract.Presenter mPresenter;
+    private ThreadPoolExecutor mExecutor;
+    /**
+     * 核心池大小
+     **/
+    private static final int CORE_POOL_SIZE = 1;
+    /**
+     * 线程池最大线程数
+     **/
+    private static final int MAX_IMUM_POOL_SIZE = 255;
 
-    public ChatDetailModel(ChatDetailContract.Presenter presenter){
+    public ChatDetailModel(ChatDetailContract.Presenter presenter) {
         mPresenter = presenter;
+        mExecutor = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_IMUM_POOL_SIZE,
+                2000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(
+                CORE_POOL_SIZE));
     }
+
 
     @Override
     public void sendMessage(final MessageBean msg, final String targetIp) {
-        new Thread(new Runnable() {
+        mExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                 switch (msg.getMsgType()){
-                     case Protocol.TEXT:
-                         if (SocketManager.getInstance().sendMsg(targetIp,msg)){
-                             mPresenter.sendSuccess(msg);
-                         }else{
-                             mPresenter.sendError("发送失败!");
-                         }
-                         break;
-                     case Protocol.IMAGE:
-                         if (SocketManager.getInstance().sendImage(targetIp,msg)){
-                             mPresenter.sendSuccess(msg);
-                         }else{
-                             mPresenter.sendError("发送失败!");
-                         }
-                         break;
-                 }
-
+                SocketThread socketThread = SocketManager.getInstance().getSocketThreadByIp(targetIp);
+                if (socketThread != null){
+                    if (socketThread.sendMsg(msg)){
+                        mPresenter.sendSuccess(msg);
+                    }
+                }else{
+                    mPresenter.sendError("Socket连接已断开！");
+                }
             }
-        }).start();
+        });
     }
+
 }

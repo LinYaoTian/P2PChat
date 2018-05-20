@@ -7,6 +7,7 @@
     <color name="black">#000000</color>
     <color name="bg_chat">#EBEBEB</color>
     <color name="grey_text_or_bg">#7B8085</color>
+    <color name="bg_popupwindow">#2c7b8085</color>
     <color name="green">#45BF1A</color>
     <color name="green_pressed">#3aa115</color>
     <!--登录-->
