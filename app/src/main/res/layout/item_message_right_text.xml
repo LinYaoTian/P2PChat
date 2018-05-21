@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rl_right_msg_item_message"
+    android:padding="10dp"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/civ_head_image_right_item_message"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        tools:src="@drawable/iv_10"
+        android:layout_alignParentEnd="true" />
+
+    <LinearLayout
+        android:id="@+id/ll_right_text_item_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_message_right"
+        android:minHeight="50dp"
+        android:orientation="horizontal"
+        android:layout_alignTop="@id/civ_head_image_right_item_message"
+        android:layout_marginTop="15dp"
+        android:layout_marginStart="20dp"
+        android:layout_toStartOf="@id/civ_head_image_right_item_message">
+
+        <TextView
+            android:id="@+id/tv_text_right_item_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textColor="@color/white"
+            android:layout_margin="10dp"
+            android:textSize="15sp"
+            tools:text="鉴定完毕" />
+
+    </LinearLayout>
+
+</RelativeLayout>

@@ -25,7 +25,6 @@ import com.rdc.p2p.base.BaseFragment;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.contract.PeerListContract;
-import com.rdc.p2p.eventBean.IpDeviceEventBean;
 import com.rdc.p2p.listener.OnClickRecyclerViewListener;
 import com.rdc.p2p.manager.SocketManager;
 import com.rdc.p2p.presenter.PeerListPresenter;
@@ -56,8 +55,9 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     TextView mTvTipNonePeer;
 
     private PeerListRvAdapter mPeerListRvAdapter;
-    private List<PeerBean> mPeerList = new ArrayList<>();
     private WifiReceiver mWifiReceiver;
+    private List<PeerBean> mPeerList;
+    private boolean isFirstScanDeviceFinished;//第一次扫描设备结束
     private Handler mHandler=new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message message) {
@@ -102,27 +102,25 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     }
 
     @Subscribe(sticky = true,threadMode = ThreadMode.MAIN)
-    public void scanDeviceFinished(IpDeviceEventBean deviceEventBean){
-        List<String> list = deviceEventBean.getList();
+    public void scanDeviceFinished(List<String> ipList){
         mPeerList.clear();
-        for (String s : list) {
+        for (String s : ipList) {
             PeerBean peerBean = new PeerBean();
             peerBean.setUserIp(s);
             mPeerList.add(peerBean);
         }
-        if (mPresenter.isServerSocketConnected()){
-            mPresenter.linkPeers(mPeerList);
+        if (isFirstScanDeviceFinished){
+            //第一次扫描成功
+            isFirstScanDeviceFinished = false;
         }else {
-            showToast("ServerSocket断开连接！");
+            if (mPresenter.isServerSocketConnected()){
+                mPresenter.linkPeers(new ArrayList<PeerBean>(mPeerList));
+                mPeerList.clear();
+                getArguments();
+            }
         }
-    }
 
-    public void setPeerList(List<String> list){
-        for (String s : list) {
-            PeerBean peerBean = new PeerBean();
-            peerBean.setUserIp(s);
-            mPeerList.add(peerBean);
-        }
+        Log.d(TAG, "scanDeviceFinished: fragment");
     }
 
     public boolean isServerSocketConnected(){
@@ -131,7 +129,8 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
 
     @Override
     protected void initData(Bundle bundle) {
-
+        isFirstScanDeviceFinished = true;
+        mPeerList = new ArrayList<>();
     }
 
     @Override
@@ -257,6 +256,11 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     @Override
     public void linkPeerError(String message) {
         showToast(message);
+    }
+
+    @Override
+    public void initServerSocketSuccess() {
+        mPresenter.linkPeers(mPeerList);
     }
 
     public class WifiReceiver extends BroadcastReceiver {

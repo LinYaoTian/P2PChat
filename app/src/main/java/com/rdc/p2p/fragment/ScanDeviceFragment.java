@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,15 +13,12 @@ import android.widget.Toast;
 
 import com.rdc.p2p.R;
 import com.rdc.p2p.contract.ScanDeviceContract;
-import com.rdc.p2p.eventBean.IpDeviceEventBean;
 import com.rdc.p2p.presenter.ScanDevicePresenter;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Created by Lin Yaotian on 2018/5/14.
@@ -30,6 +28,7 @@ public class ScanDeviceFragment extends DialogFragment implements ScanDeviceCont
     private View mView;
     private Activity mActivity;
     private ScanDevicePresenter mPresenter;
+    private String mKey;
 
     @Nullable
     @Override
@@ -38,6 +37,14 @@ public class ScanDeviceFragment extends DialogFragment implements ScanDeviceCont
         mPresenter.attachView(this);
         mView = inflater.inflate((R.layout.dialog_scab_device_progress),container,false);
         return mView;
+    }
+
+    public void setData(String key){
+        mKey = key;
+    }
+
+    public String getData(){
+        return mKey;
     }
 
     @Override
@@ -57,14 +64,13 @@ public class ScanDeviceFragment extends DialogFragment implements ScanDeviceCont
     public void onDestroyView() {
         mPresenter.detachView();
         EventBus.getDefault().unregister(this);
+        Log.d("ScanDeviceFragment", "onDestroyView: ");
         super.onDestroyView();
     }
 
     @Override
     public void scanDeviceSuccess(final List<String> ipList) {
-        IpDeviceEventBean ipDeviceEventBean = new IpDeviceEventBean();
-        ipDeviceEventBean.setList(ipList);
-        EventBus.getDefault().postSticky(ipDeviceEventBean);
+        EventBus.getDefault().postSticky(ipList);
         dismiss();
     }
 

@@ -95,7 +95,7 @@ public class SocketThread extends Thread {
                     fileInputStream.read(bytes);
                     dos.write(bytes);
                     break;
-                case Protocol.FILE:
+                case Protocol.AUDIO:
 
                     break;
             }
@@ -160,7 +160,7 @@ public class SocketThread extends Thread {
                         messageBean1.setImageUrl(String.valueOf(SDUtil.saveBitmap(bitmap,System.currentTimeMillis()+"")));
                         presenter.messageReceived(messageBean1);
                         break;
-                    case Protocol.FILE:
+                    case Protocol.AUDIO:
                         break;
                 }
             }

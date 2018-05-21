@@ -19,10 +19,11 @@ public interface PeerListContract {
         void serverSocketError(String msg);
         void linkPeerSuccess(PeerBean peerBean);
         void linkPeerError(String message);
+        void initServerSocketSuccess();
     }
 
     interface Model{
-        void initServerSocket(ServerSocketInitCallback callback);
+        void initServerSocket();
         void linkPeers(List<PeerBean> list);
         void linkPeer(PeerBean peerBean);
         void disconnect();
@@ -31,6 +32,7 @@ public interface PeerListContract {
 
     interface Presenter{
         void disconnect();
+        void initServerSocketSuccess();
         void initSocket(List<PeerBean> list);
         void linkPeers(List<PeerBean> list);
         void linkPeer(PeerBean peerBean);

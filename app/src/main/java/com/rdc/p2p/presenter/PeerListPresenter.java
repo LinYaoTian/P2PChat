@@ -31,13 +31,20 @@ public class PeerListPresenter extends BasePresenter<PeerListContract.View> impl
     }
 
     @Override
+    public void initServerSocketSuccess() {
+        if (isAttachView()){
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    getMvpView().initServerSocketSuccess();
+                }
+            });
+        }
+    }
+
+    @Override
     public void initSocket(final List<PeerBean> list) {
-        model.initServerSocket(new ServerSocketInitCallback() {
-            @Override
-            public void initSuccess() {
-                model.linkPeers(list);
-            }
-        });
+        model.initServerSocket();
     }
 
     @Override

@@ -17,7 +17,6 @@ import android.widget.EditText;
 import com.bumptech.glide.Glide;
 import com.rdc.p2p.app.App;
 import com.rdc.p2p.bean.UserBean;
-import com.rdc.p2p.eventBean.IpDeviceEventBean;
 import com.rdc.p2p.fragment.ScanDeviceFragment;
 import com.rdc.p2p.fragment.SelectImageFragment;
 import com.rdc.p2p.R;
@@ -122,10 +121,9 @@ public class LoginActivity extends BaseActivity {
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void ScanDeviceFinished(IpDeviceEventBean deviceEventBean){
+    public void ScanDeviceFinished(List<String> ipList){
         Intent intent = new Intent(LoginActivity.this,MainActivity.class);
-        ArrayList<String> list = new ArrayList<>(deviceEventBean.getList());
-        intent.putStringArrayListExtra("ipList", list);
+        intent.putStringArrayListExtra("ipList", (ArrayList<String>) ipList);
         startActivity(intent);
         finish();
     }

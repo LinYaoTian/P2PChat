@@ -54,12 +54,11 @@ public class PeerListModel implements PeerListContract.Model {
     public PeerListModel(PeerListContract.Presenter presenter) {
         mPresenter = presenter;
         isInitServerSocket = new AtomicBoolean(false);
-
     }
 
     @Override
-    public void initServerSocket(ServerSocketInitCallback callback) {
-        isInitServerSocket.set(true);
+    public void initServerSocket() {
+        isInitServerSocket.set(false);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -75,18 +74,20 @@ public class PeerListModel implements PeerListContract.Model {
                         2000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(
                         CORE_POOL_SIZE));
                 isInitServerSocket.set(true);
+                mPresenter.initServerSocketSuccess();
                 while (true) {
                     Socket socket;
                     try {
-                        Log.d(TAG, "等待socket连接");
                         socket = mServerSocket.accept();
                         String ip = socket.getInetAddress().getHostAddress();
                         Log.d(TAG, "接收到一个socket连接,ip:" + ip);
                         SocketManager socketManager = SocketManager.getInstance();
-                        SocketThread socketThread = new SocketThread(socket,mPresenter);
-                        socketManager.addSocket(ip, socket);
-                        socketManager.addSocketThread(ip,socketThread);
-                        mExecutor.execute(socketThread);
+                        if (socketManager.isClosed(ip)){
+                            SocketThread socketThread = new SocketThread(socket,mPresenter);
+                            socketManager.addSocket(ip, socket);
+                            socketManager.addSocketThread(ip,socketThread);
+                            mExecutor.execute(socketThread);
+                        }
                     } catch (IOException e) {
                         e.printStackTrace();
                         Log.d(TAG, "mServerSocket.accept() error !");
@@ -106,48 +107,37 @@ public class PeerListModel implements PeerListContract.Model {
 
     @Override
     public void linkPeers(final List<PeerBean> list) {
-        Log.d(TAG, "linkPeers: " + list.toString());
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (true){
-                    if (!isInitServerSocket()){
-                        try {
-                            Thread.sleep(1000);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                            break;
-                        }
+        if (!isInitServerSocket()){
+            mPresenter.linkPeerError("请检查WIFI!");
+            mPresenter.updatePeerList(new ArrayList<PeerBean>());
+        }else {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    for (final PeerBean peerBean : list) {
+                        mExecutor.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                linkSocket(peerBean);
+                            }
+                        });
+                    }
+                    try {
+                        Thread.sleep(3000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    if (SocketManager.getInstance().socketNum() == 0) {
+                        mPresenter.updatePeerList(new ArrayList<PeerBean>());
                     }
                 }
-            }
-        }).start();
-        for (final PeerBean peerBean : list) {
-                new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        linkSocket(peerBean);
-                    }
-                }).start();
+            }).start();
         }
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                if (SocketManager.getInstance().socketNum() == 0) {
-                    mPresenter.updatePeerList(new ArrayList<PeerBean>());
-                }
-            }
-        }).start();
     }
 
     @Override
     public void linkPeer(final PeerBean peerBean) {
-        new Thread(new Runnable() {
+        mExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 if (linkSocket(peerBean)){
@@ -156,7 +146,7 @@ public class PeerListModel implements PeerListContract.Model {
                     mPresenter.linkPeerError("建立Socket连接失败，对方已退出网络或网络错误！");
                 }
             }
-        }).start();
+        });
     }
 
     private boolean linkSocket(PeerBean peerBean) {
@@ -171,17 +161,23 @@ public class PeerListModel implements PeerListContract.Model {
             Log.d(TAG, "linkPeer ip = " + ip + ",连接 Socket 失败");
             return false;
         }
+
         SocketManager socketManager = SocketManager.getInstance();
-        socketManager.addSocket(ip, socket);
-        SocketThread socketThread = new SocketThread(socket,mPresenter);
-        socketManager.addSocketThread(ip,socketThread);
-        mExecutor.execute(socketThread);
-        //发送连接请求
-        MessageBean messageBean = new MessageBean();
-        messageBean.setMsgType(Protocol.CONNECT);
-        messageBean.setNickName(App.getUserBean().getNickName());
-        messageBean.setUserImageId(App.getUserBean().getUserImageId());
-        return socketThread.sendMsg(messageBean);
+        SocketThread socketThread = null;
+        if (socketManager.isClosed(ip)){
+            socketThread = new SocketThread(socket,mPresenter);
+            socketManager.addSocket(ip, socket);
+            socketManager.addSocketThread(ip,socketThread);
+            mExecutor.execute(socketThread);
+            //发送连接请求
+            MessageBean messageBean = new MessageBean();
+            messageBean.setMsgType(Protocol.CONNECT);
+            messageBean.setNickName(App.getUserBean().getNickName());
+            messageBean.setUserImageId(App.getUserBean().getUserImageId());
+            return socketThread.sendMsg(messageBean);
+        }else {
+            return false;
+        }
     }
 
     @Override
@@ -191,9 +187,9 @@ public class PeerListModel implements PeerListContract.Model {
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
+            isInitServerSocket.set(false);
             mExecutor.shutdownNow();
             SocketManager.getInstance().destroy();
-            isInitServerSocket.set(false);
         }
     }
 

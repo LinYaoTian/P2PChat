@@ -8,6 +8,7 @@ import com.rdc.p2p.contract.ScanDeviceContract;
 import com.rdc.p2p.presenter.ScanDevicePresenter;
 import com.rdc.p2p.util.ScanDeviceUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -40,7 +41,8 @@ public class ScanDeviceModel extends BaseModel implements ScanDeviceContract.Mod
                     }
                     try {
                         if (ScanDeviceUtil.getInstance().isFinish()) {// 扫描结束,开始验证
-                            List<String> ipList = ScanDeviceUtil.getInstance().getIpList();
+                            ScanDeviceUtil.getInstance().gc();
+                            List<String> ipList = new ArrayList<>(ScanDeviceUtil.getInstance().getIpList());
                             Log.d("ScanDeviceModel", "ipList："+ipList.toString());
                             mPresenter.scanDeviceSuccess(ipList);
                             break;
@@ -50,7 +52,7 @@ public class ScanDeviceModel extends BaseModel implements ScanDeviceContract.Mod
                         break;
                     }
                     try {
-                        Thread.sleep(2000);
+                        Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();

@@ -34,6 +34,8 @@ import com.rdc.p2p.manager.SocketManager;
 
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 
@@ -80,30 +82,30 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        getPermission(this);
+//        getPermission(this);
     }
 
-    /**
-     * 获取储存权限
-     * @param activity
-     * @return
-     */
-
-    public void getPermission(Activity activity) {
-        if (ContextCompat.checkSelfPermission(activity,Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                activity.requestPermissions(new String[]{
-                        Manifest.permission.READ_EXTERNAL_STORAGE,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE
-                }, 1);
-            }
-        }
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-    }
+//    /**
+//     * 获取储存权限
+//     * @param activity
+//     * @return
+//     */
+//
+//    public void getPermission(Activity activity) {
+//        if (ContextCompat.checkSelfPermission(activity,Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                activity.requestPermissions(new String[]{
+//                        Manifest.permission.READ_EXTERNAL_STORAGE,
+//                        Manifest.permission.WRITE_EXTERNAL_STORAGE
+//                }, 1);
+//            }
+//        }
+//    }
+//
+//    @Override
+//    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+//    }
 
     @Override
     public BasePresenter getInstance() {
@@ -128,7 +130,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         mDrawerToggle.syncState();
         mDrawerLayout.addDrawerListener(mDrawerToggle);
         mPeerListFragment = new PeerListFragment();
-        mPeerListFragment.setPeerList(getIntent().getStringArrayListExtra("ipList"));
         mVpContent.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
             @Override
             public Fragment getItem(int position) {
@@ -144,6 +145,13 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 return 1;
             }
         });
+
+        List<ScanDeviceFragment> fragmentList = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            ScanDeviceFragment fragment = new ScanDeviceFragment();
+            fragment.setData(i+"");
+            fragmentList.add(fragment);
+        }
     }
 
     private void initToolbar() {
@@ -170,6 +178,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                     ScanDeviceFragment mScanDeviceFragment = new ScanDeviceFragment();
                     mScanDeviceFragment.setCancelable(false);
                     mScanDeviceFragment.show(getSupportFragmentManager(),"scanDevice");
+                }else {
+                    showToast("ServerSocket未连接，请检查WIFI！");
                 }
                 break;
             case android.R.id.home:
