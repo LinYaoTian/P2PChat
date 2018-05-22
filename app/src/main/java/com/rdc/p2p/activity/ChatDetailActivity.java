@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.drawable.ColorDrawable;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -26,8 +27,10 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -41,9 +44,12 @@ import com.rdc.p2p.base.BaseActivity;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.contract.ChatDetailContract;
+import com.rdc.p2p.listener.OnClickRecyclerViewListener;
 import com.rdc.p2p.presenter.ChatDetailPresenter;
 import com.rdc.p2p.util.AudioRecorderUtil;
+import com.rdc.p2p.util.MediaPlayerUtil;
 import com.rdc.p2p.util.ProgressTextUtil;
+import com.rdc.p2p.widget.PlayerSoundView;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -68,8 +74,8 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     ImageView mIvPhotoAlbum;
     @BindView(R.id.iv_take_photo_act_chat_detail)
     ImageView mIvTakePhoto;
-    @BindView(R.id.iv_file_act_chat_detail)
-    ImageView mIvFile;
+    @BindView(R.id.iv_record_voice_act_chat_detail)
+    ImageView mIvRecordVoice;
     @BindView(R.id.rv_msg_list_act_chat_detail)
     RecyclerView mRvMsgList;
     @BindView(R.id.btn_send_chat_detail)
@@ -78,6 +84,9 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     EditText mEtInput;
     @BindView(R.id.layout_root_act_chat_detail)
     ConstraintLayout mRootLayout;
+    @BindView(R.id.tv_pressed_start_record_act_chat_detail)
+    TextView mTvPressedStartRecord;
+
 
     private MsgRvAdapter mMsgRvAdapter;
     private static String mPeerName;
@@ -85,10 +94,10 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     private Uri mTakePhotoUri;
     private File mTakePhotoFile;
     private AudioRecorderUtil mAudioRecorderUtil;
-    private boolean start = false;
     private ImageView mIvMicrophone;
     private TextView mTvRecordTime;
     private PopupWindow mPwMicrophone;
+    private PlayerSoundView mPsvIsPlaying = null;//正在播放音频的view
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,9 +106,24 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString("peerName",mPeerName);
+        outState.putString("peerIp",mPeerIp);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        mPeerName = savedInstanceState.getString("peerName");
+        mPeerIp = savedInstanceState.getString("peerIp");
+    }
+
+    @Override
     protected void onDestroy() {
         EventBus.getDefault().unregister(this);
         mAudioRecorderUtil.stopRecord();
+        MediaPlayerUtil.getInstance().stopPlayer();
         mPwMicrophone.dismiss();
         super.onDestroy();
     }
@@ -152,8 +176,49 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
         mTvRecordTime = view.findViewById(R.id.tv_record_time_popupWindow);
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void initListener() {
+        mMsgRvAdapter.setOnAudioClickListener(new MsgRvAdapter.OnAudioClickListener() {
+            @Override
+            public void onClick(PlayerSoundView psvPlaySound, String audioUrl) {
+                if (mPsvIsPlaying != null){
+                    //有正在播放的音频
+                    MediaPlayerUtil.getInstance().stopPlayer();
+                    mPsvIsPlaying.stopPlayer();
+                    if (mPsvIsPlaying == psvPlaySound){
+                        //同一个Item，点击则停止播放
+                        mPsvIsPlaying = null;
+                        return;
+                    }
+                }
+                mPsvIsPlaying = psvPlaySound;
+                mPsvIsPlaying.startPlayer();
+                MediaPlayerUtil.getInstance().startPlayer(audioUrl);
+            }
+        });
+        mMsgRvAdapter.setOnRecyclerViewListener(new OnClickRecyclerViewListener() {
+            @Override
+            public void onItemClick(int position) {
+                MessageBean bean = mMsgRvAdapter.getDataList().get(position);
+                switch (bean.getMsgType()){
+                    case Protocol.TEXT:
+
+                        break;
+                    case Protocol.AUDIO:
+
+                        break;
+                    case Protocol.IMAGE:
+
+                        break;
+                }
+            }
+
+            @Override
+            public boolean onItemLongClick(int position) {
+                return false;
+            }
+        });
         mBtnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -191,15 +256,34 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                 }
             }
         });
-        mIvFile.setOnClickListener(new View.OnClickListener() {
+        mIvRecordVoice.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                hideKeyboard();
+                //若有音频正在播放，则先停止音频
+                if (mPsvIsPlaying != null){
+                    mPsvIsPlaying.stopPlayer();
+                    mPsvIsPlaying = null;
+                    MediaPlayerUtil.getInstance().stopPlayer();
+                }
+                //判断权限
                 if (ContextCompat.checkSelfPermission(ChatDetailActivity.this,
                         Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
                     ActivityCompat.requestPermissions(ChatDetailActivity.this,
                             new String[]{Manifest.permission.RECORD_AUDIO}, 3);
                 }else {
-                    openRecord();
+                    //有权限
+                    if (mEtInput.getVisibility() == View.VISIBLE){
+                        //显示 按住录音 按钮，同时隐藏输入框
+                        mEtInput.setVisibility(View.INVISIBLE);
+                        mBtnSend.setClickable(false);
+                        mTvPressedStartRecord.setVisibility(View.VISIBLE);
+                    }else {
+                        mEtInput.setVisibility(View.VISIBLE);
+                        mBtnSend.setClickable(true);
+                        mTvPressedStartRecord.setVisibility(View.INVISIBLE);
+                        mAudioRecorderUtil.cancelRecord();
+                    }
                 }
             }
         });
@@ -213,22 +297,44 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
 
             @Override
             public void onStop(String filePath) {
-                showToast("录音结束:"+filePath);
+                MessageBean messageMean = new MessageBean();
+                messageMean.setMine(true);
+                messageMean.setMsgType(Protocol.AUDIO);
+                messageMean.setNickName(App.getUserBean().getNickName());
+                messageMean.setUserImageId(App.getUserBean().getUserImageId());
+                messageMean.setAudioUrl(filePath);
+                presenter.sendMessage(messageMean,mPeerIp);
+            }
+        });
+        mTvPressedStartRecord.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch (motionEvent.getAction()){
+                    case MotionEvent.ACTION_DOWN:
+                        mPwMicrophone.showAtLocation(mRootLayout,Gravity.CENTER,0,0);
+                        mAudioRecorderUtil.startRecord();
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        mPwMicrophone.dismiss();
+                        mAudioRecorderUtil.stopRecord();
+                        break;
+                }
+                return false;
+            }
+        });
+        MediaPlayerUtil.getInstance().setMediaPlayerListener(new MediaPlayerUtil.MediaPlayerListener() {
+            @Override
+            public void onCompletion() {
+                mPsvIsPlaying.stopPlayer();
+                mPsvIsPlaying = null;
+            }
+
+            @Override
+            public void onError() {
+
             }
         });
 
-    }
-
-    private void openRecord() {
-        if (!start){
-            mPwMicrophone.showAtLocation(mRootLayout,Gravity.CENTER,0,0);
-            mAudioRecorderUtil.startRecord();
-            start = !start;
-        }else {
-            mPwMicrophone.dismiss();
-            mAudioRecorderUtil.stopRecord();
-            start = false;
-        }
     }
 
     private void openCamera() {
@@ -273,7 +379,7 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                 break;
             case 3:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    openRecord();
+
                 }else {
                     showToast("拒绝授权，无法打开录音！");
                 }
@@ -310,6 +416,15 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                 }else {
                     showToast("获取拍照后的相片路径失败！");
                 }
+        }
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm.isActive() && getCurrentFocus() != null) {
+            if (getCurrentFocus().getWindowToken() != null) {
+                imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
+            }
         }
     }
 

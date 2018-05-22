@@ -39,6 +39,7 @@ public class SocketThread extends Thread {
     private String targetIp;
     private boolean needDestroy;
     private Handler mHandler;
+    private HandlerThread mHandlerThread;
 
 
     public SocketThread(Socket socket, PeerListContract.Presenter presenter) {
@@ -46,9 +47,9 @@ public class SocketThread extends Thread {
         needDestroy = true;
         this.socket = socket;
         this.presenter = presenter;
-        HandlerThread handlerThread = new HandlerThread("HandlerThread");
-        handlerThread.start();
-        mHandler = new Handler(handlerThread.getLooper()){
+        mHandlerThread = new HandlerThread("HandlerThread");
+        mHandlerThread.start();
+        mHandler = new Handler(mHandlerThread.getLooper()){
             @Override
             public void handleMessage(Message msg) {
                 switch (msg.what){
@@ -57,6 +58,7 @@ public class SocketThread extends Thread {
                             String ip = (String) msg.obj;
                             SocketManager.getInstance().removeSocketByIp(ip);
                             SocketManager.getInstance().removeSocketThreadByIp(ip);
+                            mHandlerThread.quitSafely();
                             Log.d(TAG, "handleMessage: destroy");
                         }else {
                             needDestroy = true;
@@ -88,15 +90,20 @@ public class SocketThread extends Thread {
                     dos.writeUTF(messageBean.getText());
                     break;
                 case Protocol.IMAGE:
-                    FileInputStream fileInputStream = new FileInputStream(messageBean.getImageUrl());
-                    int size = fileInputStream.available();
+                    FileInputStream ImageInputStream = new FileInputStream(messageBean.getImageUrl());
+                    int size = ImageInputStream.available();
                     dos.writeInt(size);
                     byte[] bytes = new byte[size];
-                    fileInputStream.read(bytes);
+                    ImageInputStream.read(bytes);
                     dos.write(bytes);
                     break;
                 case Protocol.AUDIO:
-
+                    FileInputStream AudioInputStream = new FileInputStream(messageBean.getAudioUrl());
+                    int audioSize = AudioInputStream.available();
+                    dos.writeInt(audioSize);
+                    byte[] audioBytes = new byte[audioSize];
+                    AudioInputStream.read(audioBytes);
+                    dos.write(audioBytes);
                     break;
             }
             mHandler.sendMessage(getDelayDestroyMsg());
@@ -132,6 +139,7 @@ public class SocketThread extends Thread {
                 mHandler.sendMessage(getDelayDestroyMsg());
                 switch (type) {
                     case Protocol.DISCONNECT:
+                        Log.d(TAG, "Protocol disconnect ! ip="+targetIp);
                         SocketManager.getInstance().removeSocketByIp(targetIp);
                         presenter.removePeer(targetIp);
                         break;
@@ -157,10 +165,16 @@ public class SocketThread extends Thread {
                         dis.readFully(bytes);
                         Bitmap bitmap = BitmapFactory.decodeByteArray(bytes,0,size);
                         MessageBean messageBean1 = peer.transformToMessageBean(Protocol.IMAGE,false);
-                        messageBean1.setImageUrl(String.valueOf(SDUtil.saveBitmap(bitmap,System.currentTimeMillis()+"")));
+                        messageBean1.setImageUrl(SDUtil.saveBitmap(bitmap,System.currentTimeMillis()+""));
                         presenter.messageReceived(messageBean1);
                         break;
                     case Protocol.AUDIO:
+                        int audioSize = dis.readInt();
+                        byte[] audioByte = new byte[audioSize];
+                        dis.readFully(audioByte);
+                        MessageBean audioMessage = peer.transformToMessageBean(Protocol.AUDIO,false);
+                        audioMessage.setAudioUrl(SDUtil.saveAudio(audioByte,System.currentTimeMillis()+""));
+                        presenter.messageReceived(audioMessage);
                         break;
                 }
             }
@@ -169,6 +183,7 @@ public class SocketThread extends Thread {
             SocketManager.getInstance().removeSocketByIp(targetIp);
             SocketManager.getInstance().removeSocketThreadByIp(targetIp);
             presenter.removePeer(targetIp);
+            mHandlerThread.quitSafely();
         }
     }
 

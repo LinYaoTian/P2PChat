@@ -16,9 +16,4 @@ public interface OnClickRecyclerViewListener {
      */
     boolean onItemLongClick(int position);
 
-    /**
-     * 点击 footerView
-     */
-    void onFooterViewClick();
-
 }

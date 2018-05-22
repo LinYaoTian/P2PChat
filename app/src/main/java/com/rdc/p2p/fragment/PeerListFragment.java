@@ -162,10 +162,6 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
                 return false;
             }
 
-            @Override
-            public void onFooterViewClick() {
-
-            }
         });
     }
 

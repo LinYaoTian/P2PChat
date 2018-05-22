@@ -87,6 +87,12 @@ public class PeerListModel implements PeerListContract.Model {
                             socketManager.addSocket(ip, socket);
                             socketManager.addSocketThread(ip,socketThread);
                             mExecutor.execute(socketThread);
+                        }else {
+                            SocketThread socketThread = new SocketThread(socket,mPresenter);
+                            socketManager.removeSocketByIp(ip);
+                            socketManager.removeSocketThreadByIp(ip);
+                            socketManager.addSocketThread(ip,socketThread);
+                            mExecutor.execute(socketThread);
                         }
                     } catch (IOException e) {
                         e.printStackTrace();

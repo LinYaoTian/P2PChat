@@ -11,8 +11,8 @@ public class MessageBean {
     private String text;
     private String time;
     private String imageUrl;
-    private String fileUrl;
-    private int msgType;//消息类型 文件/图片/文字
+    private String AudioUrl;
+    private int msgType;//消息类型 音频/图片/文字
     private boolean isMine;//是否是本人的消息
 
     @Override
@@ -24,7 +24,7 @@ public class MessageBean {
                 ", text='" + getText() + '\'' +
                 ", time='" + time + '\'' +
                 ", imageUrl='" + imageUrl + '\'' +
-                ", fileUrl='" + fileUrl + '\'' +
+                ", AudioUrl='" + AudioUrl + '\'' +
                 ", msgType=" + msgType +
                 ", isMine=" + isMine +
                 '}';
@@ -80,8 +80,8 @@ public class MessageBean {
 
     public String getText() {
         if (text == null || text.equals("")){
-            if (fileUrl != null){
-                return "文件";
+            if (AudioUrl != null){
+                return "音频";
             }else if (imageUrl != null){
                 return "图片";
             }
@@ -109,12 +109,12 @@ public class MessageBean {
         this.imageUrl = imageUrl == null ? "" : imageUrl;
     }
 
-    public String getFileUrl() {
-        return fileUrl == null ? "" : fileUrl;
+    public String getAudioUrl() {
+        return AudioUrl == null ? "" : AudioUrl;
     }
 
-    public void setFileUrl(String fileUrl) {
-        this.fileUrl = fileUrl == null ? "" : fileUrl;
+    public void setAudioUrl(String audioUrl) {
+        this.AudioUrl = audioUrl == null ? "" : audioUrl;
     }
 
     public int getMsgType() {

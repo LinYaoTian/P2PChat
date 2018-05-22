@@ -20,10 +20,11 @@ public class AudioRecorderUtil {
     private String FolderPath;
     private int BASE = 1;
     private int SPACE = 100;// 间隔取样时间
-
     private MediaRecorder mMediaRecorder;
     private final String TAG = "fan";
-    public static final int MAX_LENGTH = 1000 * 60 * 10;// 最大录音时长1000*60*10;
+    private static final int MAX_LENGTH = 1000 * 60 * 10;// 最大录音时长1000*60*10;
+    private boolean isRecording = false;
+
 
     private OnAudioStatusUpdateListener audioStatusUpdateListener;
 
@@ -36,11 +37,9 @@ public class AudioRecorderUtil {
     }
 
     private AudioRecorderUtil(String filePath) {
-
         File path = new File(filePath);
         if(!path.exists())
             path.mkdirs();
-
         this.FolderPath = filePath;
     }
 
@@ -55,6 +54,7 @@ public class AudioRecorderUtil {
      * @return
      */
     public void startRecord() {
+        isRecording = true;
         // 开始录音
         /* ①Initial：实例化MediaRecorder对象 */
         if (mMediaRecorder == null){
@@ -62,9 +62,11 @@ public class AudioRecorderUtil {
         }
         try {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-            mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.AAC_ADTS);
+            mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
+            mMediaRecorder.setAudioSamplingRate(44100);
             mMediaRecorder.setAudioChannels(1);
             mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+            mMediaRecorder.setAudioEncodingBitRate(96000);
 
 //            /* ②setAudioSource/setVedioSource */
 //            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);// 设置麦克风
@@ -76,7 +78,7 @@ public class AudioRecorderUtil {
 //             */
 //            mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
 
-            filePath = FolderPath + System.currentTimeMillis() + ".aac" ;
+            filePath = FolderPath + System.currentTimeMillis() + ".m4a" ;
             /* ③准备 */
             mMediaRecorder.setOutputFile(filePath);
             mMediaRecorder.setMaxDuration(MAX_LENGTH);
@@ -97,6 +99,7 @@ public class AudioRecorderUtil {
      * 停止录音
      */
     public long stopRecord() {
+        isRecording = false;
         if (mMediaRecorder == null){
             return 0L;
         }
@@ -132,16 +135,19 @@ public class AudioRecorderUtil {
             mMediaRecorder.reset();
             mMediaRecorder.release();
             mMediaRecorder = null;
-
         }catch (RuntimeException e){
-            mMediaRecorder.reset();
-            mMediaRecorder.release();
+            if (mMediaRecorder != null){
+                mMediaRecorder.reset();
+                mMediaRecorder.release();
+            }
             mMediaRecorder = null;
         }
-        File file = new File(filePath);
-        if (file.exists())
-            file.delete();
-        filePath = "";
+        if (isRecording){
+            File file = new File(filePath);
+            if (file.exists())
+                file.delete();
+            filePath = "";
+        }
     }
 
     private final Handler mHandler = new Handler();
@@ -150,9 +156,6 @@ public class AudioRecorderUtil {
             updateMicStatus();
         }
     };
-
-
-
 
     public void setOnAudioStatusUpdateListener(OnAudioStatusUpdateListener audioStatusUpdateListener) {
         this.audioStatusUpdateListener = audioStatusUpdateListener;

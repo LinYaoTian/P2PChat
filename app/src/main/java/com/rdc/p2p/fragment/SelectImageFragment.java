@@ -57,10 +57,7 @@ public class SelectImageFragment extends DialogFragment {
                 return false;
             }
 
-            @Override
-            public void onFooterViewClick() {
 
-            }
         });
         rvImage.setLayoutManager(new GridLayoutManager(mDialogView.getContext(),3));
         rvImage.setAdapter(mUserImageRvAdapter);
