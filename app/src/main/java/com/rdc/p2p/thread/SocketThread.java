@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.rdc.p2p.app.App;
@@ -80,11 +81,9 @@ public class SocketThread extends Thread {
      * @return
      */
     public boolean sendMsg(MessageBean messageBean){
-        UserBean userBean = messageBean.transformToUserBean();
         try {
             dos = new DataOutputStream(socket.getOutputStream());
             dos.writeInt(messageBean.getMsgType());
-            dos.writeUTF(GsonUtil.gsonToJson(userBean));
             switch (messageBean.getMsgType()){
                 case Protocol.TEXT:
                     dos.writeUTF(messageBean.getText());
@@ -104,6 +103,11 @@ public class SocketThread extends Thread {
                     byte[] audioBytes = new byte[audioSize];
                     AudioInputStream.read(audioBytes);
                     dos.write(audioBytes);
+                case Protocol.CONNECT:
+                    dos.writeUTF(GsonUtil.gsonToJson(messageBean.transformToUserBean()));
+                    break;
+                case Protocol.CONNECT_RESPONSE:
+                    dos.writeUTF(GsonUtil.gsonToJson(messageBean.transformToUserBean()));
                     break;
             }
             mHandler.sendMessage(getDelayDestroyMsg());
@@ -119,7 +123,6 @@ public class SocketThread extends Thread {
         mHandler.sendMessageDelayed(getDestroyMsg(), DELAY_MILLIS);
         try {
             dis = new DataInputStream(socket.getInputStream());
-            dos = new DataOutputStream(socket.getOutputStream());
             //循环读取消息
             while (true){
                 Log.d(TAG, "ip="+targetIp+" start read Protocol !");
@@ -128,14 +131,6 @@ public class SocketThread extends Thread {
                 if (type == Protocol.KEEP_LIVE){
                     continue;
                 }
-                String u = dis.readUTF();
-//                Log.d(TAG, "type:"+type+",user:"+u);
-                UserBean userBean = GsonUtil.gsonToBean(u, UserBean.class);
-                PeerBean peer = new PeerBean();
-                peer.setUserIp(targetIp);
-                peer.setUserImageId(userBean.getUserImageId());
-                peer.setNickName(userBean.getNickName());
-                peer.setRecentMessage("");
                 mHandler.sendMessage(getDelayDestroyMsg());
                 switch (type) {
                     case Protocol.DISCONNECT:
@@ -144,37 +139,51 @@ public class SocketThread extends Thread {
                         presenter.removePeer(targetIp);
                         break;
                     case Protocol.CONNECT:
-                        presenter.addPeer(peer);
+                        String u1 = dis.readUTF();
+                        presenter.addPeer(getPeer(u1));
                         //回复连接响应
-                        String userGson = GsonUtil.gsonToJson(App.getUserBean());
-                        dos.writeInt(Protocol.CONNECT_RESPONSE);
-                        dos.writeUTF(userGson);
+                        MessageBean responseMsg = new MessageBean();
+                        responseMsg.setUserImageId(App.getUserBean().getUserImageId());
+                        responseMsg.setNickName(App.getUserBean().getNickName());
+                        responseMsg.setMsgType(Protocol.CONNECT_RESPONSE);
+                        sendMsg(responseMsg);
                         break;
                     case Protocol.CONNECT_RESPONSE:
                         Log.d(TAG, "CONNECT_RESPONSE");
-                        presenter.addPeer(peer);
+                        String u2 = dis.readUTF();
+                        presenter.addPeer(getPeer(u2));
                         break;
                     case Protocol.TEXT:
-                        peer.setRecentMessage(dis.readUTF());
-                        MessageBean messageBean = peer.transformToMessageBean(Protocol.TEXT,false);
-                        presenter.messageReceived(messageBean);
+                        String text = dis.readUTF();
+                        MessageBean textMsg = new MessageBean();
+                        textMsg.setUserIp(targetIp);
+                        textMsg.setMsgType(Protocol.TEXT);
+                        textMsg.setMine(false);
+                        textMsg.setText(text);
+                        presenter.messageReceived(textMsg);
                         break;
                     case Protocol.IMAGE:
                         int size = dis.readInt();
                         byte[] bytes = new byte[size];
                         dis.readFully(bytes);
                         Bitmap bitmap = BitmapFactory.decodeByteArray(bytes,0,size);
-                        MessageBean messageBean1 = peer.transformToMessageBean(Protocol.IMAGE,false);
-                        messageBean1.setImageUrl(SDUtil.saveBitmap(bitmap,System.currentTimeMillis()+""));
-                        presenter.messageReceived(messageBean1);
+                        MessageBean imageMsg = new MessageBean();
+                        imageMsg.setUserIp(targetIp);
+                        imageMsg.setMine(false);
+                        imageMsg.setMsgType(Protocol.IMAGE);
+                        imageMsg.setImageUrl(SDUtil.saveBitmap(bitmap,System.currentTimeMillis()+""));
+                        presenter.messageReceived(imageMsg);
                         break;
                     case Protocol.AUDIO:
                         int audioSize = dis.readInt();
                         byte[] audioByte = new byte[audioSize];
                         dis.readFully(audioByte);
-                        MessageBean audioMessage = peer.transformToMessageBean(Protocol.AUDIO,false);
-                        audioMessage.setAudioUrl(SDUtil.saveAudio(audioByte,System.currentTimeMillis()+""));
-                        presenter.messageReceived(audioMessage);
+                        MessageBean audioMsg = new MessageBean();
+                        audioMsg.setUserIp(targetIp);
+                        audioMsg.setMine(false);
+                        audioMsg.setMsgType(Protocol.AUDIO);
+                        audioMsg.setAudioUrl(SDUtil.saveAudio(audioByte,System.currentTimeMillis()+""));
+                        presenter.messageReceived(audioMsg);
                         break;
                 }
             }
@@ -185,6 +194,21 @@ public class SocketThread extends Thread {
             presenter.removePeer(targetIp);
             mHandlerThread.quitSafely();
         }
+    }
+
+    /**
+     * 根据UserGson构造PeerBean
+     * @param userGson User实体类对应的gson
+     * @return PeerBean
+     */
+    @NonNull
+    private PeerBean getPeer(String userGson) {
+        UserBean userBean = GsonUtil.gsonToBean(userGson, UserBean.class);
+        PeerBean peer = new PeerBean();
+        peer.setUserIp(targetIp);
+        peer.setUserImageId(userBean.getUserImageId());
+        peer.setNickName(userBean.getNickName());
+        return peer;
     }
 
     private Message getDestroyMsg(){

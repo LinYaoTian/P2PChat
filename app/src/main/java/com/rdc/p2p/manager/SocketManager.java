@@ -24,15 +24,6 @@ public class SocketManager {
 
     private static final String TAG = "SocketManager";
 
-    /**
-     * 核心池大小
-     **/
-    private static final int CORE_POOL_SIZE = 255;
-    /**
-     * 线程池最大线程数
-     **/
-    private static final int MAX_IMUM_POOL_SIZE = 255;
-
     private ConcurrentHashMap<String,Socket> mClients;//与客户端的连接集合
     private ConcurrentHashMap<String,SocketThread> mSocketThreads;
     private static SocketManager mSocketManager = null;
@@ -52,7 +43,7 @@ public class SocketManager {
 
         return "SocketManager{" +
                 "socketIp:"+mClients.keySet()+","+
-                "isClosed:"+s1+
+                "isClosedSocket:"+s1+
                 '}';
     }
 
@@ -72,6 +63,11 @@ public class SocketManager {
         return mSocketManager;
     }
 
+    /**
+     * 根据ip获取SocketThread
+     * @param ip
+     * @return
+     */
     public SocketThread getSocketThreadByIp(String ip){
         SocketThread socketThread = mSocketThreads.get(ip);
         if (socketThread == null){
@@ -81,6 +77,10 @@ public class SocketManager {
         return socketThread;
     }
 
+    /**
+     * 根据ip移除SocketThread
+     * @param ip
+     */
     public void removeSocketThreadByIp(String ip){
         SocketThread socketThread = mSocketThreads.remove(ip);
         if (socketThread != null){
@@ -88,72 +88,37 @@ public class SocketManager {
         }
     }
 
+    /**
+     * 添加一个SocketThread
+     * @param ip
+     * @param socketThread
+     */
     public void addSocketThread(String ip,SocketThread socketThread){
-        if (mSocketThreads.containsKey(ip)){
-            removeSocketByIp(ip);
-        }
+//        if (mSocketThreads.containsKey(ip)){
+//            removeSocketByIp(ip);
+//        }
         mSocketThreads.put(ip, socketThread);
     }
 
+    /**
+     * 获取当前所有正在通信Socket的set集合
+     * @return
+     */
     public Set<Map.Entry<String, Socket>> getSocketSet(){
         return  mClients.entrySet();
     }
 
-    public int socketNum(){
+    /**
+     * 获取当前正在通信的socket数量
+     * @return
+     */
+    public int socketCount(){
         return mClients.size();
     }
 
     /**
-     * 对目标ip发送文本消息,需要在子线程中执行
-     * @param targetIp
-     * @param messageBean
-     * @return false 发送失败, true 发送成功
+     * 销毁保存的socket和socketThread
      */
-    public boolean sendMsg(final String targetIp, MessageBean messageBean) {
-        UserBean userBean = messageBean.transformToUserBean();
-        Socket socket = querySocketByIp(targetIp);
-        if (socket == null){
-            return false;
-        }
-        DataOutputStream dos = null;
-        try {
-            dos = new DataOutputStream(socket.getOutputStream());
-            dos.writeInt(Protocol.TEXT);
-            dos.writeUTF(GsonUtil.gsonToJson(userBean));
-            dos.writeUTF(messageBean.getText());
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-        return true;
-    }
-
-    public boolean sendImage(String targetIp,MessageBean messageBean){
-        UserBean userBean = messageBean.transformToUserBean();
-        Socket socket = querySocketByIp(targetIp);
-        if (socket == null){
-            return false;
-        }
-        DataOutputStream dos = null;
-        try {
-            dos = new DataOutputStream(socket.getOutputStream());
-            FileInputStream fileInputStream = new FileInputStream(messageBean.getImageUrl());
-            int size = fileInputStream.available();
-            Log.d(TAG, "sendImage: "+size);
-            dos.writeInt(Protocol.IMAGE);
-            dos.writeUTF(GsonUtil.gsonToJson(userBean));
-            dos.writeInt(size);
-            byte[] bytes = new byte[size];
-            fileInputStream.read(bytes);
-            dos.write(bytes);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-        return true;
-    }
-
-
     public void destroy(){
         Collection<Socket> socketCollection = mClients.values();
         for (Socket socket : socketCollection) {
@@ -213,7 +178,7 @@ public class SocketManager {
      * @param ip
      * @return return true if socket is closed or null ,else return false
      */
-    public boolean isClosed(String ip){
+    public boolean isClosedSocket(String ip){
         Socket socket = mClients.get(ip);
         return socket == null || socket.isClosed();
     }
@@ -224,17 +189,6 @@ public class SocketManager {
      * @param s
      */
     public void addSocket(String ip,Socket s){
-        if (!mClients.containsKey(ip)){
-            mClients.put(ip, s);
-        }else {
-            try {
-                Socket oldSocket = mClients.replace(ip,s);
-                if (oldSocket != null){
-                    oldSocket.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        mClients.put(ip, s);
     }
 }

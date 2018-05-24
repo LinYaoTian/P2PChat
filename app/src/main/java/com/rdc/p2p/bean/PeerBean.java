@@ -1,5 +1,7 @@
 package com.rdc.p2p.bean;
 
+import android.annotation.SuppressLint;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -60,9 +62,13 @@ public class PeerBean {
     }
 
     public String getTime() {
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
-        Date date = new Date();
-        return time == null ? sdf.format(date) : time;
+        if (time == null){
+            @SuppressLint("SimpleDateFormat")
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+            Date date = new Date();
+            time = sdf.format(date);
+        }
+        return time;
     }
 
     public void setTime(String time) {

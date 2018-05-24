@@ -10,6 +10,7 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.rdc.p2p.R;
 import com.rdc.p2p.base.BaseRecyclerViewAdapter;
+import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.util.ImageUtil;
 
@@ -20,6 +21,79 @@ import de.hdodenhof.circleimageview.CircleImageView;
  * Created by Lin Yaotian on 2018/5/16.
  */
 public class PeerListRvAdapter extends BaseRecyclerViewAdapter<PeerBean> {
+
+    /**
+     *根据IP删除指定item
+     * @param ip
+     */
+    public void removeItem(String ip){
+        int index = getIndexByIp(ip);
+        if (index != -1){
+            mDataList.remove(index);
+            notifyItemRemoved(index);
+        }
+    }
+
+    /**
+     * 添加一个Item
+     * @param peerBean
+     */
+    public void addItem(PeerBean peerBean){
+        mDataList.add(peerBean);
+        notifyItemRangeChanged(mDataList.size()-1,1);
+    }
+
+    /**
+     * 跟g更新个Item的Text
+     * @param text
+     */
+    public PeerBean updateItemText(String text, String targetIp){
+        int index = getIndexByIp(targetIp);
+        if (index != -1){
+            PeerBean peer = getDataList().get(index);
+            peer.setRecentMessage(text);
+            notifyItemChanged(index);
+            return peer;
+        }
+        return null;
+    }
+
+    /**
+     * 更新某个Item
+     * @param peerBean
+     */
+    public void updateItem(PeerBean peerBean){
+        int index = getIndexByIp(peerBean.getUserIp());
+        if (index != -1){
+            mDataList.set(index,peerBean);
+            notifyItemChanged(index);
+        }
+    }
+
+
+    /**
+     * 是否存在某个Item
+     * @param ip
+     * @return
+     */
+    public boolean isContained(String ip){
+        return getIndexByIp(ip) != -1;
+    }
+
+    /**
+     * 根据IP查询该成员在成员列表中的位置
+     * @param ip
+     * @return 成员的位置 ,如果找不到则返回 -1
+     */
+    private int getIndexByIp(String ip){
+        for (int i = 0; i < mDataList.size(); i++) {
+            if (mDataList.get(i).getUserIp().equals(ip)){
+                //找到成员的下标
+                return i;
+            }
+        }
+        return -1;
+    }
 
     @NonNull
     @Override

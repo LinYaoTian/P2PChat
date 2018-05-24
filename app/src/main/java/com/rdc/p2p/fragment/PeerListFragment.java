@@ -114,13 +114,10 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
             isFirstScanDeviceFinished = false;
         }else {
             if (mPresenter.isServerSocketConnected()){
-                mPresenter.linkPeers(new ArrayList<PeerBean>(mPeerList));
+                mPresenter.linkPeers(new ArrayList<>(mPeerList));
                 mPeerList.clear();
-                getArguments();
             }
         }
-
-        Log.d(TAG, "scanDeviceFinished: fragment");
     }
 
     public boolean isServerSocketConnected(){
@@ -149,7 +146,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
             @Override
             public void onItemClick(int position) {
                 PeerBean peerBean = mPeerListRvAdapter.getDataList().get(position);
-                if (SocketManager.getInstance().isClosed(peerBean.getUserIp())){
+                if (SocketManager.getInstance().isClosedSocket(peerBean.getUserIp())){
                     showToast("正在建立Socket连接！");
                     mPresenter.linkPeer(peerBean);
                 }else {
@@ -182,17 +179,14 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
 
     @Override
     public void messageReceived(MessageBean messageBean) {
-        EventBus.getDefault().postSticky(messageBean);
-        List<PeerBean> list = mPeerListRvAdapter.getDataList();
-        PeerBean peerBean = messageBean.transformToPeerBean();
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).getUserIp().equals(peerBean.getUserIp())){
-                list.set(i,peerBean);
-                mPeerListRvAdapter.notifyItemChanged(i);
-                return;
-            }
+        PeerBean peer = mPeerListRvAdapter.updateItemText(messageBean.getText(),messageBean.getUserIp());
+        if (peer == null){
+            showToast("收到成员列表以外的消息！");
+        }else {
+            messageBean.setNickName(peer.getNickName());
+            messageBean.setUserImageId(peer.getUserImageId());
+            EventBus.getDefault().postSticky(messageBean);
         }
-        mPeerListRvAdapter.appendData(peerBean);
     }
 
     @Override
@@ -201,39 +195,17 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
         mRvPeerList.setVisibility(View.VISIBLE);
         mLlLoadingPeersInfo.setVisibility(View.GONE);
         mTvTipNonePeer.setVisibility(View.GONE);
-        List<PeerBean> list = mPeerListRvAdapter.getDataList();
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).getUserIp().equals(peerBean.getUserIp())){
-                //已经存在该成员，则更新它的信息
-                list.set(i,peerBean);
-                mPeerListRvAdapter.notifyItemChanged(i);
-                return;
-            }
+        if (mPeerListRvAdapter.isContained(peerBean.getUserIp())){
+            mPeerListRvAdapter.updateItem(peerBean);
+        }else {
+            mPeerListRvAdapter.addItem(peerBean);
         }
-        //不存该成员，则添加进列表
-        mPeerListRvAdapter.appendData(peerBean);
     }
 
     @Override
     public void removePeer(String ip) {
         Log.d(TAG, "removePeer: "+ip);
-        List<PeerBean> list = mPeerListRvAdapter.getDataList();
-        int index = -1;
-        for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).getUserIp().equals(ip)){
-                index = i;
-                break;
-            }
-        }
-        if (index != -1){
-            list.remove(index);
-            mPeerListRvAdapter.notifyItemRemoved(index);
-        }
-        if (list.size() == 0){
-            mRvPeerList.setVisibility(View.GONE);
-            mLlLoadingPeersInfo.setVisibility(View.GONE);
-            mTvTipNonePeer.setVisibility(View.VISIBLE);
-        }
+        mPeerListRvAdapter.removeItem(ip);
     }
 
     @Override

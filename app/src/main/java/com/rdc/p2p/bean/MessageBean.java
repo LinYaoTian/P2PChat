@@ -1,5 +1,10 @@
 package com.rdc.p2p.bean;
 
+import android.annotation.SuppressLint;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Created by Lin Yaotian on 2018/5/16.
  */
@@ -94,7 +99,13 @@ public class MessageBean {
     }
 
     public String getTime() {
-        return time == null ? "" : time;
+        if (time == null){
+            @SuppressLint("SimpleDateFormat")
+            SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+            Date date = new Date();
+            time = sdf.format(date);
+        }
+        return time;
     }
 
     public void setTime(String time) {

@@ -12,6 +12,8 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -66,6 +68,8 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     private static final String TAG = "ChatDetailActivity";
     private static final int CHOOSE_PHOTO = 2;
     private static final int TAKE_PHOTO = 3;
+    private static final int SCROLL = -1;//滑动到底部
+    private static final int HIDE_SOFT_INPUT = -2;//隐藏软键盘
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
     @BindView(R.id.tv_title)
@@ -98,6 +102,22 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     private TextView mTvRecordTime;
     private PopupWindow mPwMicrophone;
     private PlayerSoundView mPsvIsPlaying = null;//正在播放音频的view
+    private Handler mHandler = new Handler(new Handler.Callback() {
+        @Override
+        public boolean handleMessage(Message message) {
+            switch (message.what){
+                case SCROLL:
+                    if (mMsgRvAdapter.getItemCount() - 1 > 0){
+                        mRvMsgList.smoothScrollToPosition(mMsgRvAdapter.getItemCount() - 1);
+                    }
+                    break;
+                case HIDE_SOFT_INPUT:
+                    hideKeyboard();
+                    break;
+            }
+            return false;
+        }
+    });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -230,6 +250,7 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     messageMean.setUserImageId(App.getUserBean().getUserImageId());
                     messageMean.setText(getString(mEtInput));
                     presenter.sendMessage(messageMean,mPeerIp);
+                    mEtInput.setText("");
                 }
             }
         });
@@ -337,29 +358,6 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
 
     }
 
-    private void openCamera() {
-        mTakePhotoFile = new File(getExternalCacheDir(),"take_photo.jpg");
-        if (mTakePhotoFile.exists()){
-            mTakePhotoFile.delete();
-            try {
-                mTakePhotoFile.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-                Log.d(TAG, "openCamera: 创建File失败！");
-            }
-        }else {
-
-        }
-        if (Build.VERSION.SDK_INT >=24){
-            mTakePhotoUri = FileProvider.getUriForFile(ChatDetailActivity.this,"com.rdc.p2p.fileprovider",mTakePhotoFile);
-        }else {
-            mTakePhotoUri = Uri.fromFile(mTakePhotoFile);
-        }
-        Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
-        intent.putExtra(MediaStore.EXTRA_OUTPUT,mTakePhotoUri);
-        startActivityForResult(intent,TAKE_PHOTO);
-    }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode){
@@ -438,6 +436,32 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     }
 
     /**
+     * 打开相机
+     */
+    private void openCamera() {
+        mTakePhotoFile = new File(getExternalCacheDir(),"take_photo.jpg");
+        if (mTakePhotoFile.exists()){
+            mTakePhotoFile.delete();
+            try {
+                mTakePhotoFile.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+                Log.d(TAG, "openCamera: 创建File失败！");
+            }
+        }else {
+
+        }
+        if (Build.VERSION.SDK_INT >=24){
+            mTakePhotoUri = FileProvider.getUriForFile(ChatDetailActivity.this,"com.rdc.p2p.fileprovider",mTakePhotoFile);
+        }else {
+            mTakePhotoUri = Uri.fromFile(mTakePhotoFile);
+        }
+        Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
+        intent.putExtra(MediaStore.EXTRA_OUTPUT,mTakePhotoUri);
+        startActivityForResult(intent,TAKE_PHOTO);
+    }
+
+    /**
      * 根据相册返回的Intent解析处理，最终发送出去
      * @param data
      */
@@ -484,16 +508,51 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     @Override
     public void sendSuccess(MessageBean messageBean) {
         mMsgRvAdapter.appendData(messageBean);
-        List<MessageBean> list = mMsgRvAdapter.getDataList();
-        StringBuilder s= new StringBuilder();
-        for (MessageBean bean : list) {
-            s.append(bean.getText()).append(",");
-        }
+        mHandler.sendEmptyMessage(SCROLL);
     }
 
     @Override
     public void sendError(String message) {
         showToast(message);
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
+            View currentFocusView = getCurrentFocus();
+            if (isShouldHideInput(currentFocusView, ev)) {
+                mHandler.sendEmptyMessageDelayed(HIDE_SOFT_INPUT,100);
+            }
+            return super.dispatchTouchEvent(ev);
+        }
+        // 必不可少，否则所有的组件都不会有TouchEvent了
+        return getWindow().superDispatchTouchEvent(ev) || onTouchEvent(ev);
+    }
+
+    /**
+     * 点击EditText以外的地方，软键盘收起来
+     * @param v     获得焦点的View
+     * @param event 点击事件
+     * @return 是否隐藏键盘
+     */
+    private boolean isShouldHideInput(View v, MotionEvent event) {
+        if (v != null && (v instanceof EditText)) {
+            int[] leftTop = {0, 0};
+            //获取输入框当前的location位置
+            v.getLocationInWindow(leftTop);
+            int left = leftTop[0];
+            int top = leftTop[1];
+            int bottom = top + v.getHeight();
+            int right = left + v.getWidth();
+            if (event.getX() > left && event.getX() < right
+                    && event.getY() > top && event.getY() < bottom) {
+                // 点击的是输入框区域，保留点击EditText的事件
+                return false;
+            } else {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void initToolbar() {
@@ -511,6 +570,7 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
         if (messageBean.getUserIp().equals(mPeerIp)){
             Log.d(TAG, "receiveMessage: ");
             mMsgRvAdapter.appendData(messageBean);
+            mHandler.sendEmptyMessageAtTime(SCROLL,100);
         }
     }
 }

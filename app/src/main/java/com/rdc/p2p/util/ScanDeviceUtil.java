@@ -38,6 +38,8 @@ public class ScanDeviceUtil {
     private static final int CORE_POOL_SIZE = 5;
     /** 线程池最大线程数 **/
     private static final int MAX_POOL_SIZE = 255;
+    /**等待队列长度**/
+    private static final int QUEUE_LENGTH = 125;
 
     private String mDevAddress;// 本机IP地址-完整
     private String mLocAddress;// 局域网IP地址头,如：192.168.1.
@@ -111,10 +113,12 @@ public class ScanDeviceUtil {
          */
         mExecutor = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_POOL_SIZE,
                 1000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(
-                CORE_POOL_SIZE));
+                QUEUE_LENGTH));
+
 
         // 新建线程池
-        for (int i = 1; i < 255; i++) {// 创建256个线程分别去ping
+        for (int i = 1; i < 256; i++) {
+            // 创建256个线程分别去ping
             final int lastAddress = i;// 存放ip最后一位地址 1-255
             Runnable run = new Runnable() {
 

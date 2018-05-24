@@ -1,8 +1,5 @@
 package com.rdc.p2p.model;
 
-import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Message;
 import android.util.Log;
 
 import com.rdc.p2p.app.App;
@@ -10,7 +7,6 @@ import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.contract.PeerListContract;
-import com.rdc.p2p.listener.ServerSocketInitCallback;
 import com.rdc.p2p.manager.SocketManager;
 import com.rdc.p2p.thread.SocketThread;
 
@@ -82,15 +78,9 @@ public class PeerListModel implements PeerListContract.Model {
                         String ip = socket.getInetAddress().getHostAddress();
                         Log.d(TAG, "接收到一个socket连接,ip:" + ip);
                         SocketManager socketManager = SocketManager.getInstance();
-                        if (socketManager.isClosed(ip)){
+                        if (socketManager.isClosedSocket(ip)){
                             SocketThread socketThread = new SocketThread(socket,mPresenter);
                             socketManager.addSocket(ip, socket);
-                            socketManager.addSocketThread(ip,socketThread);
-                            mExecutor.execute(socketThread);
-                        }else {
-                            SocketThread socketThread = new SocketThread(socket,mPresenter);
-                            socketManager.removeSocketByIp(ip);
-                            socketManager.removeSocketThreadByIp(ip);
                             socketManager.addSocketThread(ip,socketThread);
                             mExecutor.execute(socketThread);
                         }
@@ -133,7 +123,7 @@ public class PeerListModel implements PeerListContract.Model {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-                    if (SocketManager.getInstance().socketNum() == 0) {
+                    if (SocketManager.getInstance().socketCount() == 0) {
                         mPresenter.updatePeerList(new ArrayList<PeerBean>());
                     }
                 }
@@ -156,24 +146,22 @@ public class PeerListModel implements PeerListContract.Model {
     }
 
     private boolean linkSocket(PeerBean peerBean) {
-        DataOutputStream dos = null;
-        Socket socket = null;
-        String ip = peerBean.getUserIp();
+        Socket socket;
+        String targetIp = peerBean.getUserIp();
         try {
-            socket = new Socket(ip, 3000);
-            Log.d(TAG, "linkPeers: ip"+ip+"success !");
+            socket = new Socket(targetIp, 3000);
+            Log.d(TAG, "linkPeers: ip"+targetIp+"success !");
         } catch (IOException e) {
             e.printStackTrace();
-            Log.d(TAG, "linkPeer ip = " + ip + ",连接 Socket 失败");
+            Log.d(TAG, "linkPeer ip = " + targetIp + ",连接 Socket 失败");
             return false;
         }
-
         SocketManager socketManager = SocketManager.getInstance();
-        SocketThread socketThread = null;
-        if (socketManager.isClosed(ip)){
+        SocketThread socketThread;
+        if (socketManager.isClosedSocket(targetIp)){
             socketThread = new SocketThread(socket,mPresenter);
-            socketManager.addSocket(ip, socket);
-            socketManager.addSocketThread(ip,socketThread);
+            socketManager.addSocket(targetIp, socket);
+            socketManager.addSocketThread(targetIp,socketThread);
             mExecutor.execute(socketThread);
             //发送连接请求
             MessageBean messageBean = new MessageBean();

@@ -13,9 +13,12 @@ import com.bumptech.glide.Glide;
 import com.rdc.p2p.R;
 import com.rdc.p2p.base.BaseRecyclerViewAdapter;
 import com.rdc.p2p.bean.MessageBean;
+import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.util.ImageUtil;
 import com.rdc.p2p.widget.PlayerSoundView;
+
+import java.util.List;
 
 import butterknife.BindView;
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -33,6 +36,7 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
     private static final int TYPE_LEFT_IMAGE = 4;
     private static final int TYPE_LEFT_AUDIO = 5;
     private OnAudioClickListener mOnAudioClickListener;
+
 
     @Override
     public int getItemViewType(int position) {
