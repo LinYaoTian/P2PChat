@@ -64,7 +64,6 @@ public class ScanDeviceFragment extends DialogFragment implements ScanDeviceCont
     public void onDestroyView() {
         mPresenter.detachView();
         EventBus.getDefault().unregister(this);
-        Log.d("ScanDeviceFragment", "onDestroyView: ");
         super.onDestroyView();
     }
 

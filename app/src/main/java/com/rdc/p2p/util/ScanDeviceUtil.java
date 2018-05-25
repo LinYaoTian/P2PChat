@@ -43,9 +43,8 @@ public class ScanDeviceUtil {
 
     private String mDevAddress;// 本机IP地址-完整
     private String mLocAddress;// 局域网IP地址头,如：192.168.1.
-    private Runtime mRun;// 获取当前运行环境，来执行ping，相当于windows的cmd
-    private Process mProcess = null;// 进程
-    private String mPing = "ping -c 1 -w 3 ";// 其中 -c 1为发送的次数，-w 表示发送后等待响应的时间
+    private Runtime mRun = Runtime.getRuntime();// 获取当前运行环境，来执行ping，相当于windows的cmd
+    private String mPing = "ping -c 1 -w 2 ";// 其中 -c 1为发送的次数，-w 表示发送后等待响应的时间
     private CopyOnWriteArrayList<String> mIpList;// ping成功的IP地址
     private ThreadPoolExecutor mExecutor;// 线程池对象
     private static ScanDeviceUtil mScanDeviceUtil;
@@ -103,7 +102,6 @@ public class ScanDeviceUtil {
      */
     public void scan() {
         mIpList.clear();
-        mRun = Runtime.getRuntime();
         Log.d(TAG, "开始扫描设备,本机Ip为：" + mDevAddress);
         /**
          * 1.核心池大小 2.线程池最大线程数 3.表示线程没有任务执行时最多保持多久时间会终止
@@ -127,25 +125,25 @@ public class ScanDeviceUtil {
                     // TODO Auto-generated method stub
                     String ping = ScanDeviceUtil.this.mPing + mLocAddress
                             + lastAddress;
-                    String currnetIp = mLocAddress + lastAddress;
-                    if (mDevAddress.equals(currnetIp)) // 如果与本机IP地址相同,跳过
+                    String currentIp = mLocAddress + lastAddress;
+                    if (mDevAddress.equals(currentIp)){
+                        // 如果与本机IP地址相同,跳过
                         return;
+                    }
+                    Process process = null;
                     try {
-                        mProcess = mRun.exec(ping);
-                        int result = mProcess.waitFor();
-//                        Log.d(TAG, "正在扫描的IP地址为：" + currnetIp + "返回值为：" + result);
+                         process = mRun.exec(ping);
+                        int result = process.waitFor();
                         if (result == 0) {
 //                            Log.d(TAG, "扫描成功,Ip地址为：" + currnetIp);
-                            mIpList.add(currnetIp);
-                        } else {
-                            // 扫描失败
-//                            Log.d(TAG, "扫描失败");
+                            mIpList.add(currentIp);
                         }
                     } catch (Exception e) {
                         Log.e(TAG, "扫描异常" + e.toString());
                     } finally {
-                        if (mProcess != null)
-                            mProcess.destroy();
+                        if (process != null){
+                            process.destroy();
+                        }
                     }
                 }
             };

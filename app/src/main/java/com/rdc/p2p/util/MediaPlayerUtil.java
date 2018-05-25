@@ -19,7 +19,7 @@ public class MediaPlayerUtil implements MediaPlayer.OnPreparedListener {
 
     private MediaPlayerListener mMediaPlayerListener;
 
-    private MediaPlayerUtil(){
+    public MediaPlayerUtil(){
 
     }
 

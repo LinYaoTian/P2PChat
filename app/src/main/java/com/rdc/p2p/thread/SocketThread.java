@@ -29,25 +29,23 @@ import java.net.Socket;
  */
 public class SocketThread extends Thread {
 
-    public static final int DESTROY = 0;
-    public static final int DELAY_DESTROY = 1;
+    private static final int DESTROY = 0;
+    private static final int DELAY_DESTROY = 1;
     private static final String TAG = "SocketThread";
     private static final int DELAY_MILLIS = 1000*60*5;
-    private Socket socket;
-    private DataInputStream dis = null;//读取消息
-    private DataOutputStream dos = null;//发送消息
-    private PeerListContract.Presenter presenter;
-    private String targetIp;
-    private boolean needDestroy;
+    private Socket mSocket;
+    private PeerListContract.Presenter mPresenter;
+    private String mTargetIp;
+    private boolean mTimeOutNeedDestroy;//超过 DELAY_MILLIS 时间没有进行通信，则把Socket连接关闭，但界面上仍然显示
     private Handler mHandler;
     private HandlerThread mHandlerThread;
 
 
-    public SocketThread(Socket socket, PeerListContract.Presenter presenter) {
-        targetIp = socket.getInetAddress().getHostAddress();
-        needDestroy = true;
-        this.socket = socket;
-        this.presenter = presenter;
+    public SocketThread(Socket mSocket, PeerListContract.Presenter mPresenter) {
+        mTargetIp = mSocket.getInetAddress().getHostAddress();
+        mTimeOutNeedDestroy = true;
+        this.mSocket = mSocket;
+        this.mPresenter = mPresenter;
         mHandlerThread = new HandlerThread("HandlerThread");
         mHandlerThread.start();
         mHandler = new Handler(mHandlerThread.getLooper()){
@@ -55,19 +53,19 @@ public class SocketThread extends Thread {
             public void handleMessage(Message msg) {
                 switch (msg.what){
                     case DESTROY:
-                        if (needDestroy){
+                        if (mTimeOutNeedDestroy){
                             String ip = (String) msg.obj;
                             SocketManager.getInstance().removeSocketByIp(ip);
                             SocketManager.getInstance().removeSocketThreadByIp(ip);
                             mHandlerThread.quitSafely();
                             Log.d(TAG, "handleMessage: destroy");
                         }else {
-                            needDestroy = true;
+                            mTimeOutNeedDestroy = true;
                             mHandler.sendMessageDelayed(getDestroyMsg(), DELAY_MILLIS);
                         }
                         break;
                     case DELAY_DESTROY:
-                        needDestroy = false;
+                        mTimeOutNeedDestroy = false;
                         Log.d(TAG, "handleMessage: delay_destroy");
                         break;
                 }
@@ -82,7 +80,7 @@ public class SocketThread extends Thread {
      */
     public boolean sendMsg(MessageBean messageBean){
         try {
-            dos = new DataOutputStream(socket.getOutputStream());
+            DataOutputStream dos = new DataOutputStream(mSocket.getOutputStream());
             dos.writeInt(messageBean.getMsgType());
             switch (messageBean.getMsgType()){
                 case Protocol.TEXT:
@@ -122,25 +120,21 @@ public class SocketThread extends Thread {
     public void run() {
         mHandler.sendMessageDelayed(getDestroyMsg(), DELAY_MILLIS);
         try {
-            dis = new DataInputStream(socket.getInputStream());
+            DataInputStream dis = new DataInputStream(mSocket.getInputStream());
             //循环读取消息
             while (true){
-                Log.d(TAG, "ip="+targetIp+" start read Protocol !");
+                Log.d(TAG, "ip="+ mTargetIp +" start read Protocol !");
                 int type = dis.readInt();
-                Log.d(TAG, "ip="+targetIp+",type: "+type);
-                if (type == Protocol.KEEP_LIVE){
-                    continue;
-                }
                 mHandler.sendMessage(getDelayDestroyMsg());
                 switch (type) {
                     case Protocol.DISCONNECT:
-                        Log.d(TAG, "Protocol disconnect ! ip="+targetIp);
-                        SocketManager.getInstance().removeSocketByIp(targetIp);
-                        presenter.removePeer(targetIp);
+                        Log.d(TAG, "Protocol disconnect ! ip="+ mTargetIp);
+                        SocketManager.getInstance().removeSocketByIp(mTargetIp);
+                        mPresenter.removePeer(mTargetIp);
                         break;
                     case Protocol.CONNECT:
                         String u1 = dis.readUTF();
-                        presenter.addPeer(getPeer(u1));
+                        mPresenter.addPeer(getPeer(u1));
                         //回复连接响应
                         MessageBean responseMsg = new MessageBean();
                         responseMsg.setUserImageId(App.getUserBean().getUserImageId());
@@ -151,16 +145,16 @@ public class SocketThread extends Thread {
                     case Protocol.CONNECT_RESPONSE:
                         Log.d(TAG, "CONNECT_RESPONSE");
                         String u2 = dis.readUTF();
-                        presenter.addPeer(getPeer(u2));
+                        mPresenter.addPeer(getPeer(u2));
                         break;
                     case Protocol.TEXT:
                         String text = dis.readUTF();
                         MessageBean textMsg = new MessageBean();
-                        textMsg.setUserIp(targetIp);
+                        textMsg.setUserIp(mTargetIp);
                         textMsg.setMsgType(Protocol.TEXT);
                         textMsg.setMine(false);
                         textMsg.setText(text);
-                        presenter.messageReceived(textMsg);
+                        mPresenter.messageReceived(textMsg);
                         break;
                     case Protocol.IMAGE:
                         int size = dis.readInt();
@@ -168,30 +162,32 @@ public class SocketThread extends Thread {
                         dis.readFully(bytes);
                         Bitmap bitmap = BitmapFactory.decodeByteArray(bytes,0,size);
                         MessageBean imageMsg = new MessageBean();
-                        imageMsg.setUserIp(targetIp);
+                        imageMsg.setUserIp(mTargetIp);
                         imageMsg.setMine(false);
                         imageMsg.setMsgType(Protocol.IMAGE);
                         imageMsg.setImageUrl(SDUtil.saveBitmap(bitmap,System.currentTimeMillis()+""));
-                        presenter.messageReceived(imageMsg);
+                        mPresenter.messageReceived(imageMsg);
                         break;
                     case Protocol.AUDIO:
                         int audioSize = dis.readInt();
                         byte[] audioByte = new byte[audioSize];
                         dis.readFully(audioByte);
                         MessageBean audioMsg = new MessageBean();
-                        audioMsg.setUserIp(targetIp);
+                        audioMsg.setUserIp(mTargetIp);
                         audioMsg.setMine(false);
                         audioMsg.setMsgType(Protocol.AUDIO);
                         audioMsg.setAudioUrl(SDUtil.saveAudio(audioByte,System.currentTimeMillis()+""));
-                        presenter.messageReceived(audioMsg);
+                        mPresenter.messageReceived(audioMsg);
                         break;
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
-            SocketManager.getInstance().removeSocketByIp(targetIp);
-            SocketManager.getInstance().removeSocketThreadByIp(targetIp);
-            presenter.removePeer(targetIp);
+            if (!mTimeOutNeedDestroy){
+                mPresenter.removePeer(mTargetIp);
+            }
+            SocketManager.getInstance().removeSocketByIp(mTargetIp);
+            SocketManager.getInstance().removeSocketThreadByIp(mTargetIp);
             mHandlerThread.quitSafely();
         }
     }
@@ -205,7 +201,7 @@ public class SocketThread extends Thread {
     private PeerBean getPeer(String userGson) {
         UserBean userBean = GsonUtil.gsonToBean(userGson, UserBean.class);
         PeerBean peer = new PeerBean();
-        peer.setUserIp(targetIp);
+        peer.setUserIp(mTargetIp);
         peer.setUserImageId(userBean.getUserImageId());
         peer.setNickName(userBean.getNickName());
         return peer;
@@ -213,14 +209,14 @@ public class SocketThread extends Thread {
 
     private Message getDestroyMsg(){
         Message destroyMsg = new Message();
-        destroyMsg.obj = targetIp;
+        destroyMsg.obj = mTargetIp;
         destroyMsg.what = DESTROY;
         return destroyMsg;
     }
 
     private Message getDelayDestroyMsg(){
         Message delayDestroyMsg = new Message();
-        delayDestroyMsg.obj = targetIp;
+        delayDestroyMsg.obj = mTargetIp;
         delayDestroyMsg.what = DELAY_DESTROY;
         return delayDestroyMsg;
     }

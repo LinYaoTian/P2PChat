@@ -1,5 +1,9 @@
 package com.rdc.p2p.util;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.util.Log;
+
 import com.rdc.p2p.app.App;
 import com.zxy.tiny.Tiny;
 import com.zxy.tiny.callback.FileCallback;
@@ -24,6 +28,20 @@ public class ImageUtil {
                 "drawable",
                 App.getContxet().getPackageName());
     }
+
+    /**
+     * 获取图片的高:宽比例
+     * @param path 图片的存储路径
+     * @return
+     */
+    public static float getBitmapSize(String path){
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;//这个参数设置为true才有效，
+        BitmapFactory.decodeFile(path, options);//这里的bitmap是个空
+        Log.d("util", "getBitmapSize: width="+options.outWidth+",height="+options.outHeight);
+        return options.outHeight*1f/options.outWidth;
+    }
+
 
     /**
      * 图片的压缩

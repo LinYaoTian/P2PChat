@@ -97,8 +97,14 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     public void onDestroyView() {
         super.onDestroyView();
         EventBus.getDefault().unregister(this);
-        mBaseActivity.unregisterReceiver(mWifiReceiver);
-        mPresenter.disconnect();
+        if (mBaseActivity != null){
+            mBaseActivity.unregisterReceiver(mWifiReceiver);
+        }else {
+            Log.d(TAG, "onDestroyView：PeerListFragment Activity is null !");
+        }
+        if (mPresenter != null){
+            mPresenter.disconnect();
+        }
     }
 
     @Subscribe(sticky = true,threadMode = ThreadMode.MAIN)
@@ -206,6 +212,11 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     public void removePeer(String ip) {
         Log.d(TAG, "removePeer: "+ip);
         mPeerListRvAdapter.removeItem(ip);
+        if (mPeerListRvAdapter.getDataList().size() == 0){
+            mRvPeerList.setVisibility(View.GONE);
+            mLlLoadingPeersInfo.setVisibility(View.GONE);
+            mTvTipNonePeer.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override

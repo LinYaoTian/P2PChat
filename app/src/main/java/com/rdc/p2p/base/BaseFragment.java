@@ -71,7 +71,9 @@ public abstract class BaseFragment<T extends BasePresenter> extends Fragment {
     @Override
     public void onDestroyView() {
         mUnbinder.unbind();
-        mPresenter.detachView();
+        if (mPresenter != null){
+            mPresenter.detachView();
+        }
         super.onDestroyView();
     }
 

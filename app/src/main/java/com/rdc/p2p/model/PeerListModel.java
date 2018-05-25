@@ -69,6 +69,7 @@ public class PeerListModel implements PeerListContract.Model {
                 mExecutor = new ThreadPoolExecutor(CORE_POOL_SIZE, MAX_IMUM_POOL_SIZE,
                         2000, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(
                         CORE_POOL_SIZE));
+                mExecutor.allowCoreThreadTimeOut(true);
                 isInitServerSocket.set(true);
                 mPresenter.initServerSocketSuccess();
                 while (true) {
@@ -84,6 +85,7 @@ public class PeerListModel implements PeerListContract.Model {
                             socketManager.addSocketThread(ip,socketThread);
                             mExecutor.execute(socketThread);
                         }
+
                     } catch (IOException e) {
                         e.printStackTrace();
                         Log.d(TAG, "mServerSocket.accept() error !");

@@ -57,7 +57,7 @@
             android:layout_marginStart="10dp"
             android:layout_marginEnd="8dp"
             android:text="@string/tip_pressed_start_record"
-            android:background="@drawable/bg_selector_pressed_start_record"
+            android:background="@drawable/bg_pressed_record_selector"
             android:textSize="@dimen/text_size_normal"
             app:layout_constraintBottom_toBottomOf="@+id/btn_send_chat_detail"
             app:layout_constraintEnd_toStartOf="@+id/btn_send_chat_detail"
@@ -104,7 +104,7 @@
             android:layout_height="30dp"
             android:src="@drawable/bg_photo_album"
             app:layout_constraintBottom_toBottomOf="@+id/iv_take_photo_act_chat_detail"
-            app:layout_constraintEnd_toStartOf="@+id/iv_record_voice_act_chat_detail"
+            app:layout_constraintEnd_toStartOf="@+id/iv_file_act_chat_detail"
             app:layout_constraintStart_toEndOf="@+id/iv_take_photo_act_chat_detail"
             android:clickable="true"
             android:focusable="true"/>
@@ -116,6 +116,17 @@
             android:src="@drawable/bg_record_voice"
             app:layout_constraintBottom_toBottomOf="@+id/iv_take_photo_act_chat_detail"
             app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/iv_file_act_chat_detail"
+            android:clickable="true"
+            android:focusable="true"/>
+
+        <ImageView
+            android:id="@+id/iv_file_act_chat_detail"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:src="@drawable/bg_file"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_take_photo_act_chat_detail"
+            app:layout_constraintEnd_toStartOf="@+id/iv_record_voice_act_chat_detail"
             app:layout_constraintStart_toEndOf="@+id/iv_photo_album_act_chat_detail"
             android:clickable="true"
             android:focusable="true"/>

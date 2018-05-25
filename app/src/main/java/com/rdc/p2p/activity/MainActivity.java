@@ -82,7 +82,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+    }
 
+    @Override
+    public void recreate() {
+        super.recreate();
+        mPeerListFragment = new PeerListFragment();
     }
 
     @Override

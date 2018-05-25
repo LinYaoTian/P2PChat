@@ -11,14 +11,14 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.rdc.p2p.R;
+import com.rdc.p2p.app.App;
 import com.rdc.p2p.base.BaseRecyclerViewAdapter;
 import com.rdc.p2p.bean.MessageBean;
-import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.config.Protocol;
+import com.rdc.p2p.listener.OnGlideLoadCompleted;
 import com.rdc.p2p.util.ImageUtil;
+import com.rdc.p2p.util.ScreenUtil;
 import com.rdc.p2p.widget.PlayerSoundView;
-
-import java.util.List;
 
 import butterknife.BindView;
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -28,6 +28,8 @@ import de.hdodenhof.circleimageview.CircleImageView;
  */
 
 public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
+
+    private static final String TAG = "MsgRvAdapter";
 
     private static final int TYPE_RIGHT_TEXT = 0;
     private static final int TYPE_RIGHT_IMAGE = 1;
@@ -115,6 +117,8 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
     public void setOnAudioClickListener(OnAudioClickListener onAudioClickListener){
         this.mOnAudioClickListener = onAudioClickListener;
     }
+
+
 
     class RightAudioHolder extends BaseRvHolder{
 
@@ -222,7 +226,7 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
         @BindView(R.id.iv_image_right_item_message)
         ImageView mIvRightImage;
 
-        public RightImageHolder(View itemView) {
+        RightImageHolder(View itemView) {
             super(itemView);
         }
 
@@ -231,6 +235,7 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
             Glide.with(itemView.getContext())
                     .load(ImageUtil.getImageResId(messageBean.getUserImageId()))
                     .into(mCivRightHeadImage);
+            setIvLayoutParams(mIvRightImage,messageBean.getImageUrl());
             Glide.with(itemView.getContext())
                     .load(messageBean.getImageUrl())
                     .into(mIvRightImage);
@@ -253,10 +258,32 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
             Glide.with(itemView.getContext())
                     .load(ImageUtil.getImageResId(messageBean.getUserImageId()))
                     .into(mCivLeftHeadImage);
+            setIvLayoutParams(mIvLeftImage,messageBean.getImageUrl());
             Glide.with(itemView.getContext())
                     .load(messageBean.getImageUrl())
                     .into(mIvLeftImage);
         }
+    }
+
+    /**
+     * 根据图片的高宽比例处理ImageView的高宽
+     * @param iv
+     * @param path
+     */
+    private void setIvLayoutParams(ImageView iv,String path){
+        float scale = ImageUtil.getBitmapSize(path);
+        ViewGroup.LayoutParams layoutParams = iv.getLayoutParams();
+        int ivWidth;
+        if (scale <= 0.65f){
+            //宽图
+            ivWidth = ScreenUtil.dip2px(App.getContxet(),220);
+        }else {
+            //长图
+            ivWidth = ScreenUtil.dip2px(App.getContxet(),160);
+        }
+        layoutParams.width = ivWidth;
+        layoutParams.height = (int) (ivWidth * scale);
+        iv.setLayoutParams(layoutParams);
     }
 
 }

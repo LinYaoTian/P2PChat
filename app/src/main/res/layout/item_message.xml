@@ -120,7 +120,7 @@
                 android:id="@+id/iv_image_right_item_message"
                 android:layout_width="150dp"
                 android:layout_height="wrap_content"
-                android:scaleType="fitCenter"
+                android:scaleType="centerInside"
                 android:adjustViewBounds="true"
                 tools:src="@drawable/iv_1"  />
 
