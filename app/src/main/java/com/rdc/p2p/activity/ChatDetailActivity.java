@@ -2,21 +2,15 @@ package com.rdc.p2p.activity;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.database.Cursor;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
@@ -26,7 +20,6 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
@@ -50,11 +43,11 @@ import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.contract.ChatDetailContract;
 import com.rdc.p2p.listener.OnClickRecyclerViewListener;
-import com.rdc.p2p.listener.OnGlideLoadCompleted;
 import com.rdc.p2p.presenter.ChatDetailPresenter;
 import com.rdc.p2p.util.AudioRecorderUtil;
 import com.rdc.p2p.util.MediaPlayerUtil;
 import com.rdc.p2p.util.ProgressTextUtil;
+import com.rdc.p2p.util.SDUtil;
 import com.rdc.p2p.widget.PlayerSoundView;
 
 import org.greenrobot.eventbus.EventBus;
@@ -64,11 +57,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 
 import butterknife.BindView;
 
@@ -214,7 +203,6 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void initListener() {
-
         mMsgRvAdapter.setOnAudioClickListener(new MsgRvAdapter.OnAudioClickListener() {
             @Override
             public void onClick(PlayerSoundView psvPlaySound, String audioUrl) {
@@ -241,27 +229,21 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     case Protocol.TEXT:
 
                         break;
-                    case Protocol.AUDIO:
-
+                    case Protocol.FILE:
+                        Log.d(TAG, "onItemClick: "+bean.getFilePath());
+                        Log.d(TAG, "onItemClick: "+SDUtil.getMimeTypeFromUrl(bean.getFilePath()));
                         break;
                     case Protocol.IMAGE:
                         List<String> list = new ArrayList<>();
-                        int currentPosition = -1;
                         for (MessageBean messageBean : mMsgRvAdapter.getDataList()) {
                             if (messageBean.getMsgType() == Protocol.IMAGE) {
                                 //获取所有的图片本地地址
-                                list.add(messageBean.getImageUrl());
+                                list.add(messageBean.getImagePath());
                             }
                         }
-                        String currentImagePath = mMsgRvAdapter.getDataList().get(position).getImageUrl();
-                        for (int i = 0; i < list.size(); i++) {
-                            if (list.get(i).equals(currentImagePath)){
-                                //找到当前点击图片地址的序号
-                                currentPosition = i;
-                                break;
-                            }
-                        }
-                        PhotoActivity.actionStart(ChatDetailActivity.this,list,currentPosition);
+                        String currentImagePath = mMsgRvAdapter.getDataList().get(position).getImagePath();
+                        PhotoActivity.actionStart(ChatDetailActivity.this,list,list.indexOf(currentImagePath));
+
                         break;
                 }
             }
@@ -289,13 +271,9 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
         mIvPhotoAlbum.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (ContextCompat.checkSelfPermission(ChatDetailActivity.this,
-                        Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(ChatDetailActivity.this, new
-                            String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
-                } else {
-                    openAlbum();
-                }
+                Intent intent = new Intent("android.intent.action.GET_CONTENT");
+                intent.setType("image/*");
+                startActivityForResult(intent, CHOOSE_PHOTO);
             }
         });
         mIvTakePhoto.setOnClickListener(new View.OnClickListener() {
@@ -364,7 +342,7 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                 messageMean.setMsgType(Protocol.AUDIO);
                 messageMean.setNickName(App.getUserBean().getNickName());
                 messageMean.setUserImageId(App.getUserBean().getUserImageId());
-                messageMean.setAudioUrl(filePath);
+                messageMean.setAudioPath(filePath);
                 presenter.sendMessage(messageMean, mPeerIp);
             }
         });
@@ -402,13 +380,6 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
-            case 1:
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    openAlbum();
-                } else {
-                    showToast("拒绝授权，无法发送图片！");
-                }
-                break;
             case 2:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     openCamera();
@@ -426,68 +397,22 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
         }
     }
 
-    public String getPath(final Context context, final Uri uri) {
-        // DocumentProvider
-        if (DocumentsContract.isDocumentUri(context, uri)) {
-            // ExternalStorageProvider
-            if ("com.android.externalstorage.documents".equals(uri.getAuthority())) {
-                final String docId = DocumentsContract.getDocumentId(uri);
-                final String[] split = docId.split(":");
-                final String type = split[0];
-                if ("primary".equalsIgnoreCase(type)) {
-                    return Environment.getExternalStorageDirectory() + "/" + split[1];
-                }
-            }
-            // DownloadsProvider
-            else if ("com.android.providers.downloads.documents".equals(uri.getAuthority())) {
-                final String id = DocumentsContract.getDocumentId(uri);
-                final Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
-                return getDataColumn(context, contentUri, null, null);
-            }
-            // MediaProvider
-            else if ("com.android.providers.media.documents".equals(uri.getAuthority())) {
-                final String docId = DocumentsContract.getDocumentId(uri);
-                final String[] split = docId.split(":");
-                final String type = split[0];
-                Uri contentUri = null;
-                if ("image".equals(type)) {
-                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
-                } else if ("video".equals(type)) {
-                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-                } else if ("audio".equals(type)) {
-                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
-                }
-
-                final String selection = "_id=?";
-                final String[] selectionArgs = new String[]{split[1]};
-
-                return getDataColumn(context, contentUri, selection, selectionArgs);
-            }
-        }
-        // MediaStore (and general)
-        else if ("content".equalsIgnoreCase(uri.getScheme())) {
-            return getDataColumn(context, uri, null, null);
-        }
-        // File
-        else if ("file".equalsIgnoreCase(uri.getScheme())) {
-            return uri.getPath();
-        }
-        return null;
-    }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.d(TAG, "onActivityResult: "+requestCode);
         switch (requestCode) {
             case CHOOSE_PHOTO:
                 if (resultCode == RESULT_OK) {
-                    String imagePath = handleImage(data);
+                    String imagePath = SDUtil.getFilePathByUri(ChatDetailActivity.this,data.getData());
                     MessageBean messageMean = new MessageBean();
                     messageMean.setMine(true);
                     messageMean.setMsgType(Protocol.IMAGE);
                     messageMean.setNickName(App.getUserBean().getNickName());
                     messageMean.setUserImageId(App.getUserBean().getUserImageId());
-                    messageMean.setImageUrl(imagePath);
+                    messageMean.setImagePath(imagePath);
                     presenter.sendMessage(messageMean, mPeerIp);
+                }else {
+
                 }
                 break;
             case TAKE_PHOTO:
@@ -498,7 +423,7 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     messageMean.setMsgType(Protocol.IMAGE);
                     messageMean.setNickName(App.getUserBean().getNickName());
                     messageMean.setUserImageId(App.getUserBean().getUserImageId());
-                    messageMean.setImageUrl(path);
+                    messageMean.setImagePath(path);
                     presenter.sendMessage(messageMean, mPeerIp);
                 } else {
                     showToast("获取拍照后的相片路径失败！");
@@ -506,7 +431,16 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                 break;
             case FILE_MANAGER:
                 if (resultCode == RESULT_OK) {
-                    showToast(getPath(ChatDetailActivity.this,data.getData()));
+                    MessageBean fileMsg = new MessageBean();
+                    fileMsg.setMine(true);
+                    fileMsg.setMsgType(Protocol.FILE);
+                    fileMsg.setNickName(App.getUserBean().getNickName());
+                    fileMsg.setUserImageId(App.getUserBean().getUserImageId());
+                    fileMsg.setFilePath(SDUtil.getFilePathByUri(ChatDetailActivity.this,data.getData()));
+                    fileMsg.setFileName(SDUtil.getFileName(fileMsg.getFilePath()));
+                    fileMsg.setFileSize(SDUtil.getFileSize(fileMsg.getFilePath()) / 1024 +" KB");
+                    Log.d(TAG, "onActivityResult: "+fileMsg.toString());
+                    presenter.sendMessage(fileMsg, mPeerIp);
                 } else {
                     showToast("从文件管理器获取文件失败！");
                 }
@@ -514,6 +448,9 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
         }
     }
 
+    /**
+     * 隐藏键盘
+     */
     private void hideKeyboard() {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm.isActive() && getCurrentFocus() != null) {
@@ -522,16 +459,6 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
             }
         }
     }
-
-    /**
-     * 打开相册
-     */
-    private void openAlbum() {
-        Intent intent = new Intent("android.intent.action.GET_CONTENT");
-        intent.setType("image/*");
-        startActivityForResult(intent, CHOOSE_PHOTO);
-    }
-
     /**
      * 打开相机
      */
@@ -554,71 +481,6 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
         Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
         intent.putExtra(MediaStore.EXTRA_OUTPUT, mTakePhotoUri);
         startActivityForResult(intent, TAKE_PHOTO);
-    }
-
-    /**
-     * 根据相册返回的Intent解析处理，最终发送出去
-     *
-     * @param data
-     */
-    private String handleImage(Intent data) {
-        String imagePath = null;
-        Uri uri = data.getData();
-        if (DocumentsContract.isDocumentUri(this, uri)) {
-            //如果是document类型的uri，则通过document id 处理
-            String docId = DocumentsContract.getDocumentId(uri);
-            if ("com.android.providers.media.documents".equals(uri.getAuthority())) {
-                String id = docId.split(":")[1];//解析出数字格式的id
-                String selection = MediaStore.Images.Media._ID + "=" + id;
-                imagePath = getImagePath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, selection);
-            } else if ("com.android.providers.downloads.documents".equals(uri.getAuthority())) {
-                Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), Long.valueOf(docId));
-                imagePath = getImagePath(contentUri, null);
-            }
-        } else if ("content".equalsIgnoreCase(uri.getScheme())) {
-            imagePath = getImagePath(uri, null);
-        } else if ("file".equalsIgnoreCase(uri.getScheme())) {
-            imagePath = uri.getPath();
-        }
-        return imagePath;
-    }
-
-    public String getDataColumn(Context context, Uri uri, String selection,
-                                String[] selectionArgs) {
-        Cursor cursor = null;
-        final String column = "_data";
-        final String[] projection = {column};
-        try {
-            cursor = context.getContentResolver().query(uri, projection, selection, selectionArgs,
-                    null);
-            if (cursor != null && cursor.moveToFirst()) {
-                final int column_index = cursor.getColumnIndexOrThrow(column);
-                return cursor.getString(column_index);
-            }
-        } finally {
-            if (cursor != null)
-                cursor.close();
-        }
-        return null;
-    }
-
-    /**
-     * 根据Uri通过ContentProvider获取图片路劲
-     *
-     * @param uri
-     * @param selection
-     * @return
-     */
-    public String getImagePath(Uri uri, String selection) {
-        String path = null;
-        Cursor cursor = getContentResolver().query(uri, null, selection, null, null);
-        if (cursor != null) {
-            if (cursor.moveToFirst()) {
-                path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
-            }
-            cursor.close();
-        }
-        return path;
     }
 
     @Override

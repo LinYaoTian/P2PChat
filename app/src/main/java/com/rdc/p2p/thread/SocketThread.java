@@ -87,20 +87,33 @@ public class SocketThread extends Thread {
                     dos.writeUTF(messageBean.getText());
                     break;
                 case Protocol.IMAGE:
-                    FileInputStream ImageInputStream = new FileInputStream(messageBean.getImageUrl());
-                    int size = ImageInputStream.available();
+                    FileInputStream imageInputStream = new FileInputStream(messageBean.getImagePath());
+                    int size = imageInputStream.available();
                     dos.writeInt(size);
                     byte[] bytes = new byte[size];
-                    ImageInputStream.read(bytes);
+                    imageInputStream.read(bytes);
                     dos.write(bytes);
+                    dos.flush();
+                    Log.d(TAG, "sendImageMsg: "+size);
                     break;
                 case Protocol.AUDIO:
-                    FileInputStream AudioInputStream = new FileInputStream(messageBean.getAudioUrl());
-                    int audioSize = AudioInputStream.available();
+                    FileInputStream audioInputStream = new FileInputStream(messageBean.getAudioPath());
+                    int audioSize = audioInputStream.available();
                     dos.writeInt(audioSize);
                     byte[] audioBytes = new byte[audioSize];
-                    AudioInputStream.read(audioBytes);
+                    audioInputStream.read(audioBytes);
                     dos.write(audioBytes);
+                    dos.flush();
+                case Protocol.FILE:
+                    FileInputStream fileInputStream = new FileInputStream(messageBean.getFilePath());
+                    int fileSize = fileInputStream.available();
+                    dos.writeInt(fileSize);
+                    dos.writeUTF(messageBean.getFileName());
+                    byte[] fileBytes = new byte[fileSize];
+                    fileInputStream.read(fileBytes);
+                    dos.write(fileBytes);
+                    dos.flush();
+                    break;
                 case Protocol.CONNECT:
                     dos.writeUTF(GsonUtil.gsonToJson(messageBean.transformToUserBean()));
                     break;
@@ -158,6 +171,7 @@ public class SocketThread extends Thread {
                         break;
                     case Protocol.IMAGE:
                         int size = dis.readInt();
+                        Log.d(TAG, "getImageMsg: "+size);
                         byte[] bytes = new byte[size];
                         dis.readFully(bytes);
                         Bitmap bitmap = BitmapFactory.decodeByteArray(bytes,0,size);
@@ -165,19 +179,41 @@ public class SocketThread extends Thread {
                         imageMsg.setUserIp(mTargetIp);
                         imageMsg.setMine(false);
                         imageMsg.setMsgType(Protocol.IMAGE);
-                        imageMsg.setImageUrl(SDUtil.saveBitmap(bitmap,System.currentTimeMillis()+""));
+                        imageMsg.setImagePath(SDUtil.saveBitmap(bitmap,System.currentTimeMillis()+""));
+                        Log.d(TAG, "run: "+imageMsg.getImagePath());
                         mPresenter.messageReceived(imageMsg);
                         break;
                     case Protocol.AUDIO:
                         int audioSize = dis.readInt();
-                        byte[] audioByte = new byte[audioSize];
-                        dis.readFully(audioByte);
+                        byte[] audioBytes = new byte[audioSize];
+                        dis.readFully(audioBytes);
                         MessageBean audioMsg = new MessageBean();
                         audioMsg.setUserIp(mTargetIp);
                         audioMsg.setMine(false);
                         audioMsg.setMsgType(Protocol.AUDIO);
-                        audioMsg.setAudioUrl(SDUtil.saveAudio(audioByte,System.currentTimeMillis()+""));
+                        audioMsg.setAudioPath(SDUtil.saveAudio(audioBytes,System.currentTimeMillis()+""));
                         mPresenter.messageReceived(audioMsg);
+                        break;
+                    case Protocol.FILE:
+                        int fileSize = dis.readInt();
+                        String fileName = dis.readUTF();
+                        byte[] fileBytes = new byte[fileSize];
+                        dis.readFully(fileBytes);
+                        MessageBean fileMsg = new MessageBean();
+                        fileMsg.setUserIp(mTargetIp);
+                        fileMsg.setMine(false);
+                        fileMsg.setMsgType(Protocol.FILE);
+                        int dotIndex = fileName.lastIndexOf(".");
+                        if (dotIndex == -1){
+
+                        }
+                        String fileType = fileName.substring(dotIndex,fileName.length());
+                        String name = fileName.substring(0,dotIndex);
+                        Log.d(TAG, "run: fileName="+fileName+"fileType="+fileType+",name="+name);
+                        fileMsg.setFilePath(SDUtil.saveFile(fileBytes,name,fileType));
+                        fileMsg.setFileName(SDUtil.getFileName(fileMsg.getFilePath()));
+                        fileMsg.setFileSize(fileSize/1024+" KB");
+                        mPresenter.messageReceived(fileMsg);
                         break;
                 }
             }

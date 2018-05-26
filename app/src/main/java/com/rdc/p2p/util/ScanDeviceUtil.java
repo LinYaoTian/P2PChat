@@ -44,7 +44,7 @@ public class ScanDeviceUtil {
     private String mDevAddress;// 本机IP地址-完整
     private String mLocAddress;// 局域网IP地址头,如：192.168.1.
     private Runtime mRun = Runtime.getRuntime();// 获取当前运行环境，来执行ping，相当于windows的cmd
-    private String mPing = "ping -c 1 -w 2 ";// 其中 -c 1为发送的次数，-w 表示发送后等待响应的时间
+    private String mPing = "ping -c 1 -w 3 ";// 其中 -c 1为发送的次数，-w 表示发送后等待响应的时间
     private CopyOnWriteArrayList<String> mIpList;// ping成功的IP地址
     private ThreadPoolExecutor mExecutor;// 线程池对象
     private static ScanDeviceUtil mScanDeviceUtil;

@@ -15,8 +15,11 @@ public class MessageBean {
     private String nickName;
     private String text;
     private String time;
-    private String imageUrl;
-    private String AudioUrl;
+    private String imagePath;
+    private String audioPath;
+    private String filePath;
+    private String fileName;
+    private String fileSize;
     private int msgType;//消息类型 音频/图片/文字
     private boolean isMine;//是否是本人的消息
 
@@ -26,10 +29,13 @@ public class MessageBean {
                 "userIp='" + userIp + '\'' +
                 ", userImageId=" + userImageId +
                 ", nickName='" + nickName + '\'' +
-                ", text='" + getText() + '\'' +
+                ", text='" + text + '\'' +
                 ", time='" + time + '\'' +
-                ", imageUrl='" + imageUrl + '\'' +
-                ", AudioUrl='" + AudioUrl + '\'' +
+                ", imagePath='" + imagePath + '\'' +
+                ", audioPath='" + audioPath + '\'' +
+                ", filePath='" + filePath + '\'' +
+                ", fileName='" + fileName + '\'' +
+                ", fileSize='" + fileSize + '\'' +
                 ", msgType=" + msgType +
                 ", isMine=" + isMine +
                 '}';
@@ -49,6 +55,30 @@ public class MessageBean {
         userBean.setUserImageId(userImageId);
         userBean.setNickName(nickName);
         return userBean;
+    }
+
+    public String getFilePath() {
+        return filePath == null ? "" : filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath == null ? "" : filePath;
+    }
+
+    public String getFileName() {
+        return fileName == null ? "" : fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName == null ? "" : fileName;
+    }
+
+    public String getFileSize() {
+        return fileSize == null ? "" : fileSize;
+    }
+
+    public void setFileSize(String fileSize) {
+        this.fileSize = fileSize == null ? "" : fileSize;
     }
 
     public String getUserIp() {
@@ -85,10 +115,12 @@ public class MessageBean {
 
     public String getText() {
         if (text == null || text.equals("")){
-            if (AudioUrl != null){
+            if (audioPath != null){
                 return "音频";
-            }else if (imageUrl != null){
+            }else if (imagePath != null){
                 return "图片";
+            }else if (filePath != null){
+                return "文件";
             }
         }
         return text == null ? "" : text;
@@ -112,20 +144,20 @@ public class MessageBean {
         this.time = time == null ? "" : time;
     }
 
-    public String getImageUrl() {
-        return imageUrl == null ? "" : imageUrl;
+    public String getImagePath() {
+        return imagePath == null ? "" : imagePath;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl == null ? "" : imageUrl;
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath == null ? "" : imagePath;
     }
 
-    public String getAudioUrl() {
-        return AudioUrl == null ? "" : AudioUrl;
+    public String getAudioPath() {
+        return audioPath == null ? "" : audioPath;
     }
 
-    public void setAudioUrl(String audioUrl) {
-        this.AudioUrl = audioUrl == null ? "" : audioUrl;
+    public void setAudioPath(String audioPath) {
+        this.audioPath = audioPath == null ? "" : audioPath;
     }
 
     public int getMsgType() {

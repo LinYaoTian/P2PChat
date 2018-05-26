@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/rl_right_msg_item_message"
+    android:padding="10dp"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/civ_head_image_right_item_message"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        tools:src="@drawable/iv_10"
+        android:layout_alignParentEnd="true" />
+
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/cl_right_text_item_message"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_selector_file_message_right"
+        android:minHeight="50dp"
+        android:orientation="horizontal"
+        android:layout_alignTop="@id/civ_head_image_right_item_message"
+        android:layout_marginTop="15dp"
+        android:layout_marginStart="20dp"
+        android:layout_toStartOf="@id/civ_head_image_right_item_message">
+
+        <TextView
+            android:id="@+id/tv_file_name_right_item_message"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:gravity="start|center_vertical"
+            android:maxLines="2"
+            android:textColor="@color/black"
+            android:textSize="@dimen/text_size_small"
+            android:ellipsize="end"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/iv_file_image_right_item_message"
+            app:layout_constraintTop_toTopOf="@+id/iv_file_image_right_item_message"
+            tools:text="2018-" />
+
+        <ImageView
+            android:id="@+id/iv_file_image_right_item_message"
+            android:layout_width="40dp"
+            android:layout_height="45dp"
+            android:layout_margin="10dp"
+            android:src="@drawable/iv_transport_file"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.0" />
+
+        <TextView
+            android:id="@+id/tv_file_size_right_item_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="10dp"
+            android:layout_marginBottom="10dp"
+            android:layout_marginTop="3dp"
+            android:textColor="@color/grey_text_or_bg"
+            android:textSize="@dimen/text_size_very_small"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tv_file_name_right_item_message"
+            tools:text="3.0 KB" />
+
+
+
+    </android.support.constraint.ConstraintLayout>
+
+</RelativeLayout>

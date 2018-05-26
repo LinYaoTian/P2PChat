@@ -15,7 +15,6 @@ import com.rdc.p2p.app.App;
 import com.rdc.p2p.base.BaseRecyclerViewAdapter;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.config.Protocol;
-import com.rdc.p2p.listener.OnGlideLoadCompleted;
 import com.rdc.p2p.util.ImageUtil;
 import com.rdc.p2p.util.ScreenUtil;
 import com.rdc.p2p.widget.PlayerSoundView;
@@ -37,6 +36,8 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
     private static final int TYPE_LEFT_TEXT = 3;
     private static final int TYPE_LEFT_IMAGE = 4;
     private static final int TYPE_LEFT_AUDIO = 5;
+    private static final int TYPE_LEFT_FILE = 6;
+    private static final int TYPE_RIGHT_FILE= 7;
     private OnAudioClickListener mOnAudioClickListener;
 
 
@@ -50,6 +51,8 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
                 return messageBean.isMine() ? TYPE_RIGHT_IMAGE : TYPE_LEFT_IMAGE;
             case Protocol.AUDIO:
                 return messageBean.isMine() ? TYPE_RIGHT_AUDIO : TYPE_LEFT_AUDIO;
+            case Protocol.FILE:
+                return messageBean.isMine() ? TYPE_RIGHT_FILE : TYPE_LEFT_FILE;
             default:
                 return TYPE_RIGHT_TEXT;
         }
@@ -78,6 +81,12 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
             case TYPE_RIGHT_AUDIO:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_message_right_audio, parent, false);
                 return new RightAudioHolder(view);
+            case TYPE_LEFT_FILE:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_message_left_file, parent, false);
+                return new LeftFileHolder(view);
+            case TYPE_RIGHT_FILE:
+                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_message_right_file, parent, false);
+                return new RightFileHolder(view);
             default:
                 view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_message_left_text, parent, false);
                 return new LeftTextHolder(view);
@@ -104,6 +113,12 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
                 break;
             case TYPE_RIGHT_AUDIO:
                 ((RightAudioHolder)holder).bindView(mDataList.get(position));
+                break;
+            case TYPE_RIGHT_FILE:
+                ((RightFileHolder)holder).bindView(mDataList.get(position));
+                break;
+            case TYPE_LEFT_FILE:
+                ((LeftFileHolder)holder).bindView(mDataList.get(position));
                 break;
             default:
                 ((LeftTextHolder)holder).bindView(mDataList.get(position));
@@ -142,7 +157,7 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
                 mLlRightAudio.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        mOnAudioClickListener.onClick(mPsvPlaySound,messageBean.getAudioUrl());
+                        mOnAudioClickListener.onClick(mPsvPlaySound,messageBean.getAudioPath());
                     }
                 });
             }
@@ -172,7 +187,7 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
                 mLlRightAudio.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        mOnAudioClickListener.onClick(mPsvPlaySound,messageBean.getAudioUrl());
+                        mOnAudioClickListener.onClick(mPsvPlaySound,messageBean.getAudioPath());
                     }
                 });
             }
@@ -235,9 +250,9 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
             Glide.with(itemView.getContext())
                     .load(ImageUtil.getImageResId(messageBean.getUserImageId()))
                     .into(mCivRightHeadImage);
-            setIvLayoutParams(mIvRightImage,messageBean.getImageUrl());
+            setIvLayoutParams(mIvRightImage,messageBean.getImagePath());
             Glide.with(itemView.getContext())
-                    .load(messageBean.getImageUrl())
+                    .load(messageBean.getImagePath())
                     .into(mIvRightImage);
         }
     }
@@ -249,7 +264,7 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
         @BindView(R.id.iv_image_left_item_message)
         ImageView mIvLeftImage;
 
-        public LeftImageHolder(View itemView) {
+        LeftImageHolder(View itemView) {
             super(itemView);
         }
 
@@ -258,12 +273,59 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
             Glide.with(itemView.getContext())
                     .load(ImageUtil.getImageResId(messageBean.getUserImageId()))
                     .into(mCivLeftHeadImage);
-            setIvLayoutParams(mIvLeftImage,messageBean.getImageUrl());
+            setIvLayoutParams(mIvLeftImage,messageBean.getImagePath());
             Glide.with(itemView.getContext())
-                    .load(messageBean.getImageUrl())
+                    .load(messageBean.getImagePath())
                     .into(mIvLeftImage);
         }
     }
+
+    class LeftFileHolder extends BaseRvHolder{
+
+        @BindView(R.id.civ_head_image_left_item_message)
+        CircleImageView mCivLeftHeadImage;
+        @BindView(R.id.tv_file_name_left_item_message)
+        TextView mTvFileName;
+        @BindView(R.id.tv_file_size_left_item_message)
+        TextView mTvFileSize;
+
+        LeftFileHolder(View itemView) {
+            super(itemView);
+        }
+
+        @Override
+        protected void bindView(MessageBean bean) {
+            Glide.with(itemView.getContext())
+                    .load(ImageUtil.getImageResId(bean.getUserImageId()))
+                    .into(mCivLeftHeadImage);
+            mTvFileName.setText(bean.getFileName());
+            mTvFileSize.setText(bean.getFileSize());
+        }
+    }
+
+    class RightFileHolder extends BaseRvHolder{
+
+        @BindView(R.id.civ_head_image_right_item_message)
+        CircleImageView mCivRightHeadImage;
+        @BindView(R.id.tv_file_name_right_item_message)
+        TextView mTvFileName;
+        @BindView(R.id.tv_file_size_right_item_message)
+        TextView mTvFileSize;
+
+        RightFileHolder(View itemView) {
+            super(itemView);
+        }
+
+        @Override
+        protected void bindView(MessageBean bean) {
+            Glide.with(itemView.getContext())
+                    .load(ImageUtil.getImageResId(bean.getUserImageId()))
+                    .into(mCivRightHeadImage);
+            mTvFileName.setText(bean.getFileName());
+            mTvFileSize.setText(bean.getFileSize());
+        }
+    }
+
 
     /**
      * 根据图片的高宽比例处理ImageView的高宽

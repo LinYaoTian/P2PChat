@@ -54,7 +54,6 @@ public class ChatDetailModel implements ChatDetailContract.Model {
                 SocketThread socketThread = SocketManager.getInstance().getSocketThreadByIp(targetIp);
                 if (socketThread != null){
                     if (socketThread.sendMsg(msg)){
-                        Log.d(TAG, "run: "+msg.getText());
                         mPresenter.sendSuccess(msg);
                     }
                 }else{
