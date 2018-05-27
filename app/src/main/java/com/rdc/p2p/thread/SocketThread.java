@@ -2,6 +2,7 @@ package com.rdc.p2p.thread;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
@@ -9,9 +10,11 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.rdc.p2p.app.App;
+import com.rdc.p2p.bean.FileBean;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.bean.UserBean;
+import com.rdc.p2p.config.Constant;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.contract.PeerListContract;
 import com.rdc.p2p.manager.SocketManager;
@@ -20,7 +23,9 @@ import com.rdc.p2p.util.SDUtil;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
@@ -105,10 +110,10 @@ public class SocketThread extends Thread {
                     dos.write(audioBytes);
                     dos.flush();
                 case Protocol.FILE:
-                    FileInputStream fileInputStream = new FileInputStream(messageBean.getFilePath());
+                    FileInputStream fileInputStream = new FileInputStream(messageBean.getFileBean().getFilePath());
                     int fileSize = fileInputStream.available();
                     dos.writeInt(fileSize);
-                    dos.writeUTF(messageBean.getFileName());
+                    dos.writeUTF(messageBean.getFileBean().getFileName());
                     byte[] fileBytes = new byte[fileSize];
                     fileInputStream.read(fileBytes);
                     dos.write(fileBytes);
@@ -173,15 +178,41 @@ public class SocketThread extends Thread {
                         int size = dis.readInt();
                         Log.d(TAG, "getImageMsg: "+size);
                         byte[] bytes = new byte[size];
-                        dis.readFully(bytes);
-                        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes,0,size);
-                        MessageBean imageMsg = new MessageBean();
-                        imageMsg.setUserIp(mTargetIp);
-                        imageMsg.setMine(false);
-                        imageMsg.setMsgType(Protocol.IMAGE);
-                        imageMsg.setImagePath(SDUtil.saveBitmap(bitmap,System.currentTimeMillis()+""));
-                        Log.d(TAG, "run: "+imageMsg.getImagePath());
-                        mPresenter.messageReceived(imageMsg);
+
+                        File dirFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/P2P");
+                        File file;
+                        if (dirFile.exists()){
+                            if (!dirFile.isDirectory()){
+                                dirFile.delete();
+                                dirFile.mkdirs();
+                            }
+                        }else {
+                            dirFile.mkdirs();
+                        }
+                        file = new File(dirFile,"林耀填.jpg");
+                        file.createNewFile();
+                        FileOutputStream fos = new FileOutputStream(file);
+                        int transLen = 0;
+                        while(true){
+                            int read = 0;
+                            read = dis.read(bytes);
+                            if(read == -1)
+                                break;
+                            transLen += read;
+                            Log.d(TAG, "run: 接收文件进度"+100 * transLen/size +"%...");
+                            fos.write(bytes,0, read);
+                            fos.flush();
+                        }
+                        Log.d(TAG, "run: 接收文件成功！transLen="+transLen+",size="+size);
+//                        dis.readFully(bytes);
+//                        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes,0,size);
+//                        MessageBean imageMsg = new MessageBean();
+//                        imageMsg.setUserIp(mTargetIp);
+//                        imageMsg.setMine(false);
+//                        imageMsg.setMsgType(Protocol.IMAGE);
+//                        imageMsg.setImagePath(SDUtil.saveBitmap(bitmap,System.currentTimeMillis()+""));
+//                        Log.d(TAG, "run: "+imageMsg.getImagePath());
+//                        mPresenter.messageReceived(imageMsg);
                         break;
                     case Protocol.AUDIO:
                         int audioSize = dis.readInt();
@@ -196,23 +227,34 @@ public class SocketThread extends Thread {
                         break;
                     case Protocol.FILE:
                         int fileSize = dis.readInt();
-                        String fileName = dis.readUTF();
+                        String fileName = dis.readUTF();//文件名，包括了文件类型(e.g: pic.jpg)
                         byte[] fileBytes = new byte[fileSize];
                         dis.readFully(fileBytes);
+                        dis.read(fileBytes);
+                        dis.readFully(fileBytes,0,fileSize);
                         MessageBean fileMsg = new MessageBean();
                         fileMsg.setUserIp(mTargetIp);
                         fileMsg.setMine(false);
                         fileMsg.setMsgType(Protocol.FILE);
                         int dotIndex = fileName.lastIndexOf(".");
-                        if (dotIndex == -1){
-
+                        String fileType;//文件类型(e.g: .jpg)
+                        String name;//文件名(e.g: pic)
+                        if (dotIndex != -1){
+                             fileType = fileName.substring(dotIndex,fileName.length());
+                             name = fileName.substring(0,dotIndex);
+                        }else {
+                            //解析不到文件类型
+                            fileType = "";
+                            name = fileName;
                         }
-                        String fileType = fileName.substring(dotIndex,fileName.length());
-                        String name = fileName.substring(0,dotIndex);
+
                         Log.d(TAG, "run: fileName="+fileName+"fileType="+fileType+",name="+name);
-                        fileMsg.setFilePath(SDUtil.saveFile(fileBytes,name,fileType));
-                        fileMsg.setFileName(SDUtil.getFileName(fileMsg.getFilePath()));
-                        fileMsg.setFileSize(fileSize/1024+" KB");
+                        FileBean fileBean = new FileBean();
+                        fileBean.setFilePath(SDUtil.saveFile(fileBytes,name,fileType));
+                        fileBean.setFileName(SDUtil.getFileName(fileBean.getFilePath()));
+                        fileBean.setFileSize(SDUtil.getFileByteSize(fileBean.getFilePath()));
+                        fileBean.setStates(Constant.RECEIVE_ING);
+                        fileBean.setTransmittedSize(0);
                         mPresenter.messageReceived(fileMsg);
                         break;
                 }

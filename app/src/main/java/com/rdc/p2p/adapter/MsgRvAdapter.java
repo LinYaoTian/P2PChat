@@ -1,5 +1,6 @@
 package com.rdc.p2p.adapter;
 
+import android.annotation.SuppressLint;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -7,13 +8,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.rdc.p2p.R;
 import com.rdc.p2p.app.App;
 import com.rdc.p2p.base.BaseRecyclerViewAdapter;
+import com.rdc.p2p.bean.FileBean;
 import com.rdc.p2p.bean.MessageBean;
+import com.rdc.p2p.config.Constant;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.util.ImageUtil;
 import com.rdc.p2p.util.ScreenUtil;
@@ -288,18 +292,39 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
         TextView mTvFileName;
         @BindView(R.id.tv_file_size_left_item_message)
         TextView mTvFileSize;
+        @BindView(R.id.pb_receiving_progress_left_item_message)
+        ProgressBar mPbReceive;
+        @BindView(R.id.tv_receiving_states_left_item_message)
+        TextView mTvReceiveStates;
 
         LeftFileHolder(View itemView) {
             super(itemView);
         }
 
+        @SuppressLint("SetTextI18n")
         @Override
         protected void bindView(MessageBean bean) {
             Glide.with(itemView.getContext())
                     .load(ImageUtil.getImageResId(bean.getUserImageId()))
                     .into(mCivLeftHeadImage);
-            mTvFileName.setText(bean.getFileName());
-            mTvFileSize.setText(bean.getFileSize());
+            FileBean fileBean = bean.getFileBean();
+            mTvFileName.setText(fileBean.getFileName());
+            mTvFileSize.setText(fileBean.getFileSize());
+            switch (fileBean.getStates()){
+                case Constant.RECEIVE_ING:
+                    int ratio = fileBean.getTransmittedSize()/fileBean.getFileSize();
+                    mPbReceive.setProgress(ratio*100);
+                    mTvReceiveStates.setText(ratio+"%");
+                    break;
+                case Constant.RECEIVE_FINISH:
+                    mPbReceive.setVisibility(View.INVISIBLE);
+                    mTvReceiveStates.setText("已下载");
+                    break;
+                case Constant.RECEIVE_ERROR:
+                    mPbReceive.setVisibility(View.INVISIBLE);
+                    mTvReceiveStates.setText("传输出错");
+                    break;
+            }
         }
     }
 
@@ -311,18 +336,39 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
         TextView mTvFileName;
         @BindView(R.id.tv_file_size_right_item_message)
         TextView mTvFileSize;
+        @BindView(R.id.pb_sending_progress_right_item_message)
+        ProgressBar mPbSending;
+        @BindView(R.id.tv_send_status_right_item_message)
+        TextView mTvSendStatus;
 
         RightFileHolder(View itemView) {
             super(itemView);
         }
 
+        @SuppressLint("SetTextI18n")
         @Override
         protected void bindView(MessageBean bean) {
             Glide.with(itemView.getContext())
                     .load(ImageUtil.getImageResId(bean.getUserImageId()))
                     .into(mCivRightHeadImage);
-            mTvFileName.setText(bean.getFileName());
-            mTvFileSize.setText(bean.getFileSize());
+            FileBean fileBean = bean.getFileBean();
+            mTvFileName.setText(fileBean.getFileName());
+            mTvFileSize.setText(fileBean.getFileSize());
+            switch (fileBean.getStates()){
+                case Constant.SEND_ING:
+                    int ratio = fileBean.getTransmittedSize()/fileBean.getFileSize();
+                    mPbSending.setProgress(ratio*100);
+                    mTvSendStatus.setText(ratio+"%");
+                    break;
+                case Constant.SEND_FINISH:
+                    mPbSending.setVisibility(View.INVISIBLE);
+                    mTvSendStatus.setText("已发送");
+                    break;
+                case Constant.SEND_ERROR:
+                    mPbSending.setVisibility(View.INVISIBLE);
+                    mTvSendStatus.setText("传输出错");
+                    break;
+            }
         }
     }
 

@@ -17,9 +17,7 @@ public class MessageBean {
     private String time;
     private String imagePath;
     private String audioPath;
-    private String filePath;
-    private String fileName;
-    private String fileSize;
+    private FileBean fileBean;
     private int msgType;//消息类型 音频/图片/文字
     private boolean isMine;//是否是本人的消息
 
@@ -33,9 +31,7 @@ public class MessageBean {
                 ", time='" + time + '\'' +
                 ", imagePath='" + imagePath + '\'' +
                 ", audioPath='" + audioPath + '\'' +
-                ", filePath='" + filePath + '\'' +
-                ", fileName='" + fileName + '\'' +
-                ", fileSize='" + fileSize + '\'' +
+                ", fileBean=" + fileBean +
                 ", msgType=" + msgType +
                 ", isMine=" + isMine +
                 '}';
@@ -57,28 +53,12 @@ public class MessageBean {
         return userBean;
     }
 
-    public String getFilePath() {
-        return filePath == null ? "" : filePath;
+    public FileBean getFileBean() {
+        return fileBean;
     }
 
-    public void setFilePath(String filePath) {
-        this.filePath = filePath == null ? "" : filePath;
-    }
-
-    public String getFileName() {
-        return fileName == null ? "" : fileName;
-    }
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName == null ? "" : fileName;
-    }
-
-    public String getFileSize() {
-        return fileSize == null ? "" : fileSize;
-    }
-
-    public void setFileSize(String fileSize) {
-        this.fileSize = fileSize == null ? "" : fileSize;
+    public void setFileBean(FileBean fileBean) {
+        this.fileBean = fileBean;
     }
 
     public String getUserIp() {
@@ -119,7 +99,7 @@ public class MessageBean {
                 return "音频";
             }else if (imagePath != null){
                 return "图片";
-            }else if (filePath != null){
+            }else if (fileBean != null){
                 return "文件";
             }
         }

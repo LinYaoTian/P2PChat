@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Build;
@@ -39,6 +40,7 @@ import com.rdc.p2p.R;
 import com.rdc.p2p.adapter.MsgRvAdapter;
 import com.rdc.p2p.app.App;
 import com.rdc.p2p.base.BaseActivity;
+import com.rdc.p2p.bean.FileBean;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.contract.ChatDetailContract;
@@ -230,8 +232,23 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
 
                         break;
                     case Protocol.FILE:
-                        Log.d(TAG, "onItemClick: "+bean.getFilePath());
-                        Log.d(TAG, "onItemClick: "+SDUtil.getMimeTypeFromUrl(bean.getFilePath()));
+                        String mineType = SDUtil.getMimeTypeFromFilePath(bean.getFileBean().getFilePath());
+                        if (mineType != null){
+                            Intent intent = new Intent();
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            intent.setAction(Intent.ACTION_VIEW);
+                            intent.addCategory(Intent.CATEGORY_DEFAULT);
+                            intent.setDataAndType(SDUtil.getFileUri(bean.getFileBean().getFilePath()),mineType);
+                            List<ResolveInfo> list = getPackageManager().queryIntentActivities(intent, 0);
+                            if (list.size() == 0){
+                                showToast("无法打开此类型的文件!");
+                            }else {
+                                startActivity(intent);
+                            }
+                        }else {
+                            showToast("无法打开此类型的文件!");
+                        }
                         break;
                     case Protocol.IMAGE:
                         List<String> list = new ArrayList<>();
@@ -436,9 +453,10 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     fileMsg.setMsgType(Protocol.FILE);
                     fileMsg.setNickName(App.getUserBean().getNickName());
                     fileMsg.setUserImageId(App.getUserBean().getUserImageId());
-                    fileMsg.setFilePath(SDUtil.getFilePathByUri(ChatDetailActivity.this,data.getData()));
-                    fileMsg.setFileName(SDUtil.getFileName(fileMsg.getFilePath()));
-                    fileMsg.setFileSize(SDUtil.getFileSize(fileMsg.getFilePath()) / 1024 +" KB");
+                    FileBean fileBean = new FileBean();
+                    fileBean.setFilePath(SDUtil.getFilePathByUri(ChatDetailActivity.this,data.getData()));
+                    fileBean.setFileName(SDUtil.getFileName(fileBean.getFilePath()));
+                    fileBean.setFileSize(SDUtil.getFileByteSize(fileBean.getFilePath()));
                     Log.d(TAG, "onActivityResult: "+fileMsg.toString());
                     presenter.sendMessage(fileMsg, mPeerIp);
                 } else {

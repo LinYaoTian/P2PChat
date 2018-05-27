@@ -15,55 +15,82 @@
 
 
     <android.support.constraint.ConstraintLayout
+        android:id="@+id/cl_left_file_item_message"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignTop="@id/civ_head_image_left_item_message"
         android:layout_marginEnd="20dp"
         android:layout_marginTop="15dp"
         android:layout_toEndOf="@id/civ_head_image_left_item_message"
-        android:background="@drawable/bg_selector_text_message_left"
-        android:minHeight="50dp"
-        android:id="@+id/cl_left_file_item_message">
+        android:background="@drawable/bg_selector_text_message_left">
 
         <TextView
             android:id="@+id/tv_file_name_left_item_message"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="10dp"
-            android:layout_marginStart="10dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginTop="4dp"
             android:gravity="start|center_vertical"
             android:maxLines="2"
             android:textColor="@color/black"
             android:textSize="@dimen/text_size_small"
-            app:layout_constraintEnd_toStartOf="@+id/iv_file_image_left_item_message"
-            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintBottom_toTopOf="@+id/tv_file_size_left_item_message"
+            app:layout_constraintEnd_toStartOf="@+id/tv_receiving_states_left_item_message"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toEndOf="@+id/iv_file_image_left_item_message"
             app:layout_constraintTop_toTopOf="@+id/iv_file_image_left_item_message"
-            tools:text="2018-013132321.log" />
+            app:layout_constraintVertical_bias="0.0"
+            tools:text="2018-031.log1132132132321" />
 
         <ImageView
             android:id="@+id/iv_file_image_left_item_message"
-            android:layout_width="40dp"
-            android:layout_height="45dp"
-            android:layout_margin="10dp"
+            android:layout_width="50dp"
+            android:layout_height="65dp"
+            android:layout_marginStart="8dp"
             android:src="@drawable/iv_transport_file"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.0" />
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/tv_file_size_left_item_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
-            android:layout_marginBottom="10dp"
-            android:layout_marginTop="3dp"
             android:textColor="@color/grey_text_or_bg"
             android:textSize="@dimen/text_size_very_small"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tv_file_name_left_item_message"
+            android:layout_marginBottom="4dp"
+            app:layout_constraintBottom_toBottomOf="@+id/iv_file_image_left_item_message"
+            app:layout_constraintStart_toStartOf="@+id/tv_file_name_left_item_message"
             tools:text="3.0 KB" />
+
+        <ProgressBar
+            android:id="@+id/pb_receiving_progress_left_item_message"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="0dp"
+            android:layout_height="3dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginEnd="14dp"
+            android:layout_marginStart="6dp"
+            android:layout_marginTop="2dp"
+            android:max="100"
+
+            android:progressDrawable="@drawable/bg_layer_list_progress"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="@+id/iv_file_image_left_item_message"
+            app:layout_constraintTop_toBottomOf="@+id/iv_file_image_left_item_message" />
+
+        <TextView
+            android:id="@+id/tv_receiving_states_left_item_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/grey_text_or_bg"
+            android:textSize="@dimen/text_size_very_small"
+            app:layout_constraintBottom_toBottomOf="@+id/tv_file_size_left_item_message"
+            app:layout_constraintEnd_toEndOf="@+id/pb_receiving_progress_left_item_message"
+            app:layout_constraintTop_toTopOf="@+id/tv_file_size_left_item_message"
+            tools:text="80%" />
 
 
     </android.support.constraint.ConstraintLayout>

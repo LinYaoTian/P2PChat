@@ -4,11 +4,13 @@ package com.rdc.p2p.util;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Locale;
 
 import android.content.ContentUris;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -17,6 +19,7 @@ import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.v4.content.FileProvider;
+import android.support.v4.content.MimeTypeFilter;
 import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
@@ -61,6 +64,8 @@ public class SDUtil {
             e.printStackTrace();    }
         return null;
     }
+
+
 
     /**
      * 将音频存到本地
@@ -121,7 +126,7 @@ public class SDUtil {
                 dirFile.mkdirs();
             }
             while (true){
-                file = new File(dirFile,name+"."+fileType);
+                file = new File(dirFile,name+fileType);
                 if (file.exists()){
                     name = name+"&";
                 }else {
@@ -151,13 +156,31 @@ public class SDUtil {
     }
 
     /**
-     * 获取文件的大小
-     * @param fileSize
+     * 获取文件的大小(e.g: 14.1 KB)
+     * @param filePath
      * @return
      */
-    public static long getFileSize(String fileSize){
-        File file = new File(fileSize);
-        return file.length();
+    public static String getFileSize(String filePath){
+        File file = new File(filePath);
+        double fileSize = file.length();
+        DecimalFormat df = new DecimalFormat(".0");
+
+        if (fileSize > 1024*1024){
+            return df.format(fileSize/(1024*1024))+" MB";
+        }else if (fileSize > 1024){
+            return df.format(fileSize/1024)+" KB";
+        }else {
+            return fileSize+" B";
+        }
+    }
+
+    /**
+     * 获取文件的字节大小
+     * @param filePath
+     * @return
+     */
+    public static int getFileByteSize(String filePath){
+        return (int) new File(filePath).length();
     }
 
 
@@ -258,34 +281,42 @@ public class SDUtil {
         return null;
     }
 
-//    public static String getMimeTypeFromFile(File file) {
-//        String type = "*/*";
-//        String fName = file.getName();
-//        //获取后缀名前的分隔符"."在fName中的位置。
-//        int dotIndex = fName.lastIndexOf(".");
-//        if (dotIndex > 0) {
-//            //获取文件的后缀名
-//            String end = fName.substring(dotIndex, fName.length()).toLowerCase(Locale.getDefault());
-//            //在MIME和文件类型的匹配表中找到对应的MIME类型。
-//            HashMap<String, String> map = MyMimeMap.getMimeMap();
-//            if (!TextUtils.isEmpty(end) && map.keySet().contains(end)) {
-//                type = map.get(end);
-//            }
-//        }
-//        return type;
-//    }
-
-    /** 使用系统API，根据url获得对应的MIME类型 */
-    public static String getMimeTypeFromUrl(String url) {
+    /**
+     * 根据文件本地路径获取文件类型
+     * @param filePath
+     * @return
+     */
+    public static String getMimeTypeFromFilePath(String filePath) {
         String type = null;
-        //使用系统API，获取URL路径中文件的后缀名（扩展名）
-        String extension = MimeTypeMap.getFileExtensionFromUrl(url);
-        Log.d("SDUtil", "getMimeTypeFromUrl: "+extension);
-        if (extension != null) {
-            //使用系统API，获取MimeTypeMap的单例实例，然后调用其内部方法获取文件后缀名（扩展名）所对应的MIME类型
-            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+        String fName = new File(filePath).getName();
+        //获取后缀名前的分隔符"."在fName中的位置。
+        int dotIndex = fName.lastIndexOf(".");
+        if (dotIndex > 0) {
+            //获取文件的后缀名
+            String end = fName.substring(dotIndex+1, fName.length()).toLowerCase(Locale.getDefault());
+            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(end);
+            Log.d(TAG, "getMimeTypeFromFilePath: end="+end);
         }
+        Log.d(TAG, "getMimeTypeFromFilePath: type="+type);
         return type;
+    }
+
+    /**
+     * 获取文件的Uri
+     * @param filePath
+     * @return
+     */
+    public static Uri getFileUri(String filePath){
+        File file = new File(filePath);
+        Uri uri;
+        if (Build.VERSION.SDK_INT >= 24){
+            //Android 7.0 适配
+            uri = FileProvider.getUriForFile(App.getContxet(),"com.rdc.p2p.fileprovider",file);
+            App.getContxet().grantUriPermission(App.getContxet().getPackageName(),uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        }else {
+            uri = Uri.fromFile(file);
+        }
+        return uri;
     }
 
 

@@ -12,6 +12,7 @@
     <color name="green_pressed">#3aa115</color>
     <color name="green_message_right_audio_playing">#45A320</color>
     <color name="grey_message_left_audio_left">#A1A1A1</color>
+    <color name="bg_progress">#2656A3</color>
     <!--登录-->
     <color name="bg_login_state_normal">#006BD8</color>
     <color name="bg_login_state_pressed">#0167cf</color>
