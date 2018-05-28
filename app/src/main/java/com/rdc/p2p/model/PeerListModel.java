@@ -166,11 +166,7 @@ public class PeerListModel implements PeerListContract.Model {
             socketManager.addSocketThread(targetIp,socketThread);
             mExecutor.execute(socketThread);
             //发送连接请求
-            MessageBean messageBean = new MessageBean();
-            messageBean.setMsgType(Protocol.CONNECT);
-            messageBean.setNickName(App.getUserBean().getNickName());
-            messageBean.setUserImageId(App.getUserBean().getUserImageId());
-            return socketThread.sendMsg(messageBean);
+            return socketThread.sendMsg(App.getUserBean(),Protocol.CONNECT);
         }else {
             return false;
         }

@@ -2,6 +2,7 @@ package com.rdc.p2p.util;
 
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -31,10 +32,11 @@ public class SDUtil {
     /**
      * 将图片存到本地
      * @param bm 图片
-     * @param name 图片名
+     * @param name 图片名不包含文件格式
+     * @param type 文件格式，包含 .
      * @return 图片所在的Path
      */
-    public static String saveBitmap(Bitmap bm, String name) {
+    public static String saveBitmap(Bitmap bm, String name,String type) {
         try {
             File dirFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/P2P");
             File file;
@@ -47,7 +49,7 @@ public class SDUtil {
                 dirFile.mkdirs();
             }
             while (true){
-                file = new File(dirFile,name+".jpg");
+                file = new File(dirFile,name+type);
                 if (file.exists()){
                     name = name+"&";
                 }else {
@@ -63,6 +65,50 @@ public class SDUtil {
         } catch (IOException e) {
             e.printStackTrace();    }
         return null;
+    }
+
+
+    /**
+     * 获取本App缓存目录下的文件对象
+     * @param fileName 文件名 e.g: sun
+     * @param fileType 文件类型 e.g: .jpg
+     * @return
+     */
+    public static File getMyAppFile(String fileName, String fileType){
+        try {
+            File dirFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/P2P");
+            File file;
+            if (dirFile.exists()){
+                if (!dirFile.isDirectory()){
+                    dirFile.delete();
+                    dirFile.mkdirs();
+                }
+            }else {
+                dirFile.mkdirs();
+            }
+            while (true){
+                file = new File(dirFile,fileName+fileType);
+                if (file.exists()){
+                    fileName = fileName+"&";
+                }else {
+                    file.createNewFile();
+                    break;
+                }
+            }
+            return file;
+        }catch (IOException e){
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    /**
+     * 获取本App缓存的文件路径
+     * @param name 包含文件格式
+     * @return
+     */
+    public static String getFilePath(String name){
+        return Environment.getExternalStorageDirectory().getAbsolutePath()+"/P2P/"+name;
     }
 
 
@@ -111,7 +157,7 @@ public class SDUtil {
      * 将文件存到本地
      * @param bytes 文件字节数组
      * @param name 文件名字
-     * @return 图片所在的Path
+     * @return 文件所在的Path
      */
     public static String saveFile(byte[] bytes, String name,String fileType) {
         try {
@@ -181,6 +227,18 @@ public class SDUtil {
      */
     public static int getFileByteSize(String filePath){
         return (int) new File(filePath).length();
+    }
+
+    public static String  bytesTransform(int bytesSize){
+        double fileSize = bytesSize;
+        DecimalFormat df = new DecimalFormat(".0");
+        if (fileSize > 1024*1024){
+            return df.format(fileSize/(1024*1024))+" MB";
+        }else if (fileSize > 1024){
+            return df.format(fileSize/1024)+" KB";
+        }else {
+            return fileSize+" B";
+        }
     }
 
 
@@ -289,16 +347,26 @@ public class SDUtil {
     public static String getMimeTypeFromFilePath(String filePath) {
         String type = null;
         String fName = new File(filePath).getName();
+        String fileExtension = getFileExtension(fName);
+        if (fileExtension != null){
+            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension);
+        }
+        return type;
+    }
+
+    /**
+     * 获取文件后缀名(不包含 . )
+     * @param fileName
+     * @return String fileExtension or null
+     */
+    public static String getFileExtension(String fileName){
         //获取后缀名前的分隔符"."在fName中的位置。
-        int dotIndex = fName.lastIndexOf(".");
+        int dotIndex = fileName.lastIndexOf(".");
         if (dotIndex > 0) {
             //获取文件的后缀名
-            String end = fName.substring(dotIndex+1, fName.length()).toLowerCase(Locale.getDefault());
-            type = MimeTypeMap.getSingleton().getMimeTypeFromExtension(end);
-            Log.d(TAG, "getMimeTypeFromFilePath: end="+end);
+            return fileName.substring(dotIndex+1, fileName.length()).toLowerCase(Locale.getDefault());
         }
-        Log.d(TAG, "getMimeTypeFromFilePath: type="+type);
-        return type;
+        return null;
     }
 
     /**

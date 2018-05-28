@@ -1,5 +1,6 @@
 package com.rdc.p2p.contract;
 
+import com.rdc.p2p.bean.FileBean;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.listener.ServerSocketInitCallback;
@@ -14,6 +15,8 @@ public interface PeerListContract {
     interface View{
         void updatePeerList(List<PeerBean> list);
         void messageReceived(MessageBean messageBean);
+        void fileReceiving(MessageBean messageBean);
+        void fileSending(MessageBean messageBean);
         void addPeer(PeerBean peerBean);
         void removePeer(String ip);
         void serverSocketError(String msg);
@@ -44,6 +47,8 @@ public interface PeerListContract {
         void removePeer(String ip);
         void serverSocketError(String msg);
         boolean isServerSocketConnected();
+        void fileReceiving(MessageBean messageBean);
+        void fileSending(MessageBean messageBean);
     }
 
 }

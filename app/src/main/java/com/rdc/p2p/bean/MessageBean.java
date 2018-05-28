@@ -8,11 +8,9 @@ import java.util.Date;
 /**
  * Created by Lin Yaotian on 2018/5/16.
  */
-public class MessageBean {
+public class MessageBean implements Cloneable {
 
     private String userIp;
-    private int userImageId;
-    private String nickName;
     private String text;
     private String time;
     private String imagePath;
@@ -25,8 +23,6 @@ public class MessageBean {
     public String toString() {
         return "MessageBean{" +
                 "userIp='" + userIp + '\'' +
-                ", userImageId=" + userImageId +
-                ", nickName='" + nickName + '\'' +
                 ", text='" + text + '\'' +
                 ", time='" + time + '\'' +
                 ", imagePath='" + imagePath + '\'' +
@@ -35,22 +31,6 @@ public class MessageBean {
                 ", msgType=" + msgType +
                 ", isMine=" + isMine +
                 '}';
-    }
-
-    public PeerBean transformToPeerBean(){
-        PeerBean peerBean = new PeerBean();
-        peerBean.setRecentMessage(getText());
-        peerBean.setNickName(nickName);
-        peerBean.setUserImageId(userImageId);
-        peerBean.setUserIp(userIp);
-        return peerBean;
-    }
-
-    public UserBean transformToUserBean(){
-        UserBean userBean = new UserBean();
-        userBean.setUserImageId(userImageId);
-        userBean.setNickName(nickName);
-        return userBean;
     }
 
     public FileBean getFileBean() {
@@ -75,22 +55,6 @@ public class MessageBean {
 
     public void setMine(boolean mine) {
         isMine = mine;
-    }
-
-    public int getUserImageId() {
-        return userImageId;
-    }
-
-    public void setUserImageId(int userImageId) {
-        this.userImageId = userImageId;
-    }
-
-    public String getNickName() {
-        return nickName == null ? "" : nickName;
-    }
-
-    public void setNickName(String nickName) {
-        this.nickName = nickName == null ? "" : nickName;
     }
 
     public String getText() {

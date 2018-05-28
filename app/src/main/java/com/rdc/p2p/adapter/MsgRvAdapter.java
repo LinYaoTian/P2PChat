@@ -3,6 +3,7 @@ package com.rdc.p2p.adapter;
 import android.annotation.SuppressLint;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,8 +21,12 @@ import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.config.Constant;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.util.ImageUtil;
+import com.rdc.p2p.util.SDUtil;
 import com.rdc.p2p.util.ScreenUtil;
 import com.rdc.p2p.widget.PlayerSoundView;
+
+import java.text.DecimalFormat;
+import java.util.List;
 
 import butterknife.BindView;
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -43,6 +48,28 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
     private static final int TYPE_LEFT_FILE = 6;
     private static final int TYPE_RIGHT_FILE= 7;
     private OnAudioClickListener mOnAudioClickListener;
+    private int mTargetPeerImageId;//对方的用户头像id
+
+    public MsgRvAdapter(int userImageId){
+        mTargetPeerImageId = userImageId;
+    }
+
+    /**
+     * 倒序遍历获取包含FileName的Item的下标
+     * @param fileName
+     * @return
+     */
+    public int getPositionByFileName(String fileName){
+        for (int i = mDataList.size() -1; i >= 0; i--) {
+            if (mDataList.get(i).getFileBean() != null){
+                FileBean dataBean = mDataList.get(i).getFileBean();
+                if (dataBean.getFileName().equals(fileName)){
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
 
 
     @Override
@@ -129,6 +156,32 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
         }
     }
 
+    @SuppressLint("SetTextI18n")
+    @Override
+    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position, @NonNull List payloads) {
+        if (payloads.isEmpty()){
+            onBindViewHolder(holder,position);
+        }else {
+            int payload = (int) payloads.get(0);
+            switch (payload){
+                case Constant.RECEIVE_ING:
+                    LeftFileHolder leftFileHolder = (LeftFileHolder) holder;
+                    FileBean fileBean1 = mDataList.get(position).getFileBean();
+                    float ratio1 = fileBean1.getTransmittedSize()*1f/fileBean1.getFileSize();
+                    leftFileHolder.mPbReceive.setProgress((int) (ratio1*100));
+                    leftFileHolder.mTvReceiveStates.setText((int)( ratio1*100)+"%");
+                    break;
+                case Constant.SEND_ING:
+                    RightFileHolder rightFileHolder = (RightFileHolder) holder;
+                    FileBean fileBean2 = mDataList.get(position).getFileBean();
+                    float ratio2 = fileBean2.getTransmittedSize()*1f/fileBean2.getFileSize();
+                    rightFileHolder.mPbSending.setProgress((int) (ratio2*100));
+                    rightFileHolder.mTvSendStatus.setText((int)( ratio2*100)+"%");
+                    break;
+            }
+        }
+    }
+
     public interface OnAudioClickListener {
         void onClick( PlayerSoundView mPsvPlaySound,String audioUrl);
     }
@@ -136,8 +189,6 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
     public void setOnAudioClickListener(OnAudioClickListener onAudioClickListener){
         this.mOnAudioClickListener = onAudioClickListener;
     }
-
-
 
     class RightAudioHolder extends BaseRvHolder{
 
@@ -155,7 +206,7 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
         @Override
         protected void bindView(final MessageBean messageBean) {
             Glide.with(itemView.getContext())
-                    .load(ImageUtil.getImageResId(messageBean.getUserImageId()))
+                    .load(ImageUtil.getImageResId(App.getUserBean().getUserImageId()))
                     .into(mCivRightHeadImage);
             if (mOnAudioClickListener != null){
                 mLlRightAudio.setOnClickListener(new View.OnClickListener() {
@@ -185,7 +236,7 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
         @Override
         protected void bindView(final MessageBean messageBean) {
             Glide.with(itemView.getContext())
-                    .load(ImageUtil.getImageResId(messageBean.getUserImageId()))
+                    .load(ImageUtil.getImageResId(mTargetPeerImageId))
                     .into(mCivLeftHeadImage);
             if (mOnAudioClickListener != null){
                 mLlRightAudio.setOnClickListener(new View.OnClickListener() {
@@ -206,14 +257,14 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
         TextView mTvRightText;
 
 
-        public RightTextHolder(View itemView) {
+        RightTextHolder(View itemView) {
             super(itemView);
         }
 
         @Override
         protected void bindView(MessageBean messageBean) {
             Glide.with(itemView.getContext())
-                    .load(ImageUtil.getImageResId(messageBean.getUserImageId()))
+                    .load(ImageUtil.getImageResId(App.getUserBean().getUserImageId()))
                     .into(mCivRightHeadImage);
             mTvRightText.setText(messageBean.getText());
         }
@@ -225,14 +276,14 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
         @BindView(R.id.tv_text_left_item_message)
         TextView mTvLeftText;
 
-        public LeftTextHolder(View itemView) {
+        LeftTextHolder(View itemView) {
             super(itemView);
         }
 
         @Override
         protected void bindView(MessageBean messageBean) {
             Glide.with(itemView.getContext())
-                    .load(ImageUtil.getImageResId(messageBean.getUserImageId()))
+                    .load(ImageUtil.getImageResId(mTargetPeerImageId))
                     .into(mCivLeftHeadImage);
             mTvLeftText.setText(messageBean.getText());
         }
@@ -252,7 +303,7 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
         @Override
         protected void bindView(MessageBean messageBean) {
             Glide.with(itemView.getContext())
-                    .load(ImageUtil.getImageResId(messageBean.getUserImageId()))
+                    .load(ImageUtil.getImageResId(App.getUserBean().getUserImageId()))
                     .into(mCivRightHeadImage);
             setIvLayoutParams(mIvRightImage,messageBean.getImagePath());
             Glide.with(itemView.getContext())
@@ -275,7 +326,7 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
         @Override
         protected void bindView(MessageBean messageBean) {
             Glide.with(itemView.getContext())
-                    .load(ImageUtil.getImageResId(messageBean.getUserImageId()))
+                    .load(ImageUtil.getImageResId(mTargetPeerImageId))
                     .into(mCivLeftHeadImage);
             setIvLayoutParams(mIvLeftImage,messageBean.getImagePath());
             Glide.with(itemView.getContext())
@@ -305,16 +356,18 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
         @Override
         protected void bindView(MessageBean bean) {
             Glide.with(itemView.getContext())
-                    .load(ImageUtil.getImageResId(bean.getUserImageId()))
+                    .load(ImageUtil.getImageResId(mTargetPeerImageId))
                     .into(mCivLeftHeadImage);
             FileBean fileBean = bean.getFileBean();
+            Log.d(TAG, "bindView: "+fileBean.getFileName());
             mTvFileName.setText(fileBean.getFileName());
-            mTvFileSize.setText(fileBean.getFileSize());
+            mTvFileSize.setText(SDUtil.bytesTransform(fileBean.getFileSize()));
+            mPbReceive.setVisibility(View.VISIBLE);
             switch (fileBean.getStates()){
                 case Constant.RECEIVE_ING:
-                    int ratio = fileBean.getTransmittedSize()/fileBean.getFileSize();
-                    mPbReceive.setProgress(ratio*100);
-                    mTvReceiveStates.setText(ratio+"%");
+                    float ratio = fileBean.getTransmittedSize()*1f/fileBean.getFileSize();
+                    mPbReceive.setProgress((int) (ratio*100));
+                    mTvReceiveStates.setText(ratio*100+"%");
                     break;
                 case Constant.RECEIVE_FINISH:
                     mPbReceive.setVisibility(View.INVISIBLE);
@@ -349,16 +402,17 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
         @Override
         protected void bindView(MessageBean bean) {
             Glide.with(itemView.getContext())
-                    .load(ImageUtil.getImageResId(bean.getUserImageId()))
+                    .load(ImageUtil.getImageResId(App.getUserBean().getUserImageId()))
                     .into(mCivRightHeadImage);
             FileBean fileBean = bean.getFileBean();
             mTvFileName.setText(fileBean.getFileName());
-            mTvFileSize.setText(fileBean.getFileSize());
+            mTvFileSize.setText(SDUtil.bytesTransform(fileBean.getFileSize()));
+            mPbSending.setVisibility(View.VISIBLE);
             switch (fileBean.getStates()){
                 case Constant.SEND_ING:
-                    int ratio = fileBean.getTransmittedSize()/fileBean.getFileSize();
-                    mPbSending.setProgress(ratio*100);
-                    mTvSendStatus.setText(ratio+"%");
+                    float ratio = fileBean.getTransmittedSize()*1f/fileBean.getFileSize();
+                    mPbSending.setProgress((int) (ratio*100));
+                    mTvSendStatus.setText(ratio*100+"%");
                     break;
                 case Constant.SEND_FINISH:
                     mPbSending.setVisibility(View.INVISIBLE);

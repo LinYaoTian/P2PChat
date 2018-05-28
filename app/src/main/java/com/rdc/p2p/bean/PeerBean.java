@@ -15,17 +15,6 @@ public class PeerBean {
     private String time;
     private String userIp;
 
-    public MessageBean transformToMessageBean(int msgType,boolean isMine){
-        MessageBean messageBean = new MessageBean();
-        messageBean.setNickName(getNickName());
-        messageBean.setUserImageId(getUserImageId());
-        messageBean.setUserIp(getUserIp());
-        messageBean.setText(getRecentMessage());
-        messageBean.setMsgType(msgType);
-        messageBean.setMine(isMine);
-        return messageBean;
-    }
-
     @Override
     public String toString() {
         return "PeerBean{" +

@@ -38,10 +38,10 @@ import android.widget.TextView;
 
 import com.rdc.p2p.R;
 import com.rdc.p2p.adapter.MsgRvAdapter;
-import com.rdc.p2p.app.App;
 import com.rdc.p2p.base.BaseActivity;
 import com.rdc.p2p.bean.FileBean;
 import com.rdc.p2p.bean.MessageBean;
+import com.rdc.p2p.config.Constant;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.contract.ChatDetailContract;
 import com.rdc.p2p.listener.OnClickRecyclerViewListener;
@@ -96,8 +96,9 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
 
 
     private MsgRvAdapter mMsgRvAdapter;
-    private static String mPeerName;
-    private static String mPeerIp;
+    private static String mTargetPeerName;
+    private static String mTargetPeerIp;
+    private static int mTargetPeerImageId;
     private Uri mTakePhotoUri;
     private File mTakePhotoFile;
     private AudioRecorderUtil mAudioRecorderUtil;
@@ -132,15 +133,17 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putString("peerName", mPeerName);
-        outState.putString("peerIp", mPeerIp);
+        outState.putString("peerName", mTargetPeerName);
+        outState.putString("peerIp", mTargetPeerIp);
+        outState.putInt("peerImageId",mTargetPeerImageId);
     }
 
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-        mPeerName = savedInstanceState.getString("peerName");
-        mPeerIp = savedInstanceState.getString("peerIp");
+        mTargetPeerName = savedInstanceState.getString("peerName");
+        mTargetPeerIp = savedInstanceState.getString("peerIp");
+        mTargetPeerImageId = savedInstanceState.getInt("peerImageId");
     }
 
     @Override
@@ -152,9 +155,10 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
         super.onDestroy();
     }
 
-    public static void actionStart(Context context, String peerIp, String peerName) {
-        mPeerName = peerName;
-        mPeerIp = peerIp;
+    public static void actionStart(Context context, String peerIp, String peerName,int peerImageId) {
+        mTargetPeerName = peerName;
+        mTargetPeerIp = peerIp;
+        mTargetPeerImageId = peerImageId;
         context.startActivity(new Intent(context, ChatDetailActivity.class));
     }
 
@@ -187,11 +191,12 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     @Override
     protected void initView() {
         initToolbar();
-        mTvTitle.setText(mPeerName);
-        mMsgRvAdapter = new MsgRvAdapter();
+        mTvTitle.setText(mTargetPeerName);
+        mMsgRvAdapter = new MsgRvAdapter(mTargetPeerImageId);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         mRvMsgList.setLayoutManager(linearLayoutManager);
         mRvMsgList.setAdapter(mMsgRvAdapter);
+        mRvMsgList.getItemAnimator().setChangeDuration(0);
         View view = View.inflate(this, R.layout.popupwindow_micorphone, null);
         mPwMicrophone = new PopupWindow(this);
         mPwMicrophone.setBackgroundDrawable(new ColorDrawable(0x00000000));
@@ -232,24 +237,29 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
 
                         break;
                     case Protocol.FILE:
-                        String mineType = SDUtil.getMimeTypeFromFilePath(bean.getFileBean().getFilePath());
-                        if (mineType != null){
-                            Intent intent = new Intent();
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            intent.setAction(Intent.ACTION_VIEW);
-                            intent.addCategory(Intent.CATEGORY_DEFAULT);
-                            intent.setDataAndType(SDUtil.getFileUri(bean.getFileBean().getFilePath()),mineType);
-                            List<ResolveInfo> list = getPackageManager().queryIntentActivities(intent, 0);
-                            if (list.size() == 0){
-                                showToast("无法打开此类型的文件!");
+                        if (bean.getFileBean().getStates() != Constant.RECEIVE_ING
+                                || bean.getFileBean().getStates() != Constant.SEND_ING){
+                            String mineType = SDUtil.getMimeTypeFromFilePath(bean.getFileBean().getFilePath());
+                            if (mineType != null){
+                                Intent intent = new Intent();
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                intent.setAction(Intent.ACTION_VIEW);
+                                intent.addCategory(Intent.CATEGORY_DEFAULT);
+                                intent.setDataAndType(SDUtil.getFileUri(bean.getFileBean().getFilePath()),mineType);
+                                List<ResolveInfo> list = getPackageManager().queryIntentActivities(intent, 0);
+                                if (list.size() == 0){
+                                    showToast("无法打开此类型的文件!");
+                                }else {
+                                    startActivity(intent);
+                                }
                             }else {
-                                startActivity(intent);
+                                showToast("无法打开此类型的文件!");
                             }
+                            break;
                         }else {
-                            showToast("无法打开此类型的文件!");
+
                         }
-                        break;
                     case Protocol.IMAGE:
                         List<String> list = new ArrayList<>();
                         for (MessageBean messageBean : mMsgRvAdapter.getDataList()) {
@@ -277,10 +287,8 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     MessageBean messageMean = new MessageBean();
                     messageMean.setMine(true);
                     messageMean.setMsgType(Protocol.TEXT);
-                    messageMean.setNickName(App.getUserBean().getNickName());
-                    messageMean.setUserImageId(App.getUserBean().getUserImageId());
                     messageMean.setText(getString(mEtInput));
-                    presenter.sendMessage(messageMean, mPeerIp);
+                    presenter.sendMessage(messageMean, mTargetPeerIp);
                     mEtInput.setText("");
                 }
             }
@@ -357,10 +365,8 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                 MessageBean messageMean = new MessageBean();
                 messageMean.setMine(true);
                 messageMean.setMsgType(Protocol.AUDIO);
-                messageMean.setNickName(App.getUserBean().getNickName());
-                messageMean.setUserImageId(App.getUserBean().getUserImageId());
                 messageMean.setAudioPath(filePath);
-                presenter.sendMessage(messageMean, mPeerIp);
+                presenter.sendMessage(messageMean, mTargetPeerIp);
             }
         });
         mTvPressedStartRecord.setOnTouchListener(new View.OnTouchListener() {
@@ -416,7 +422,6 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        Log.d(TAG, "onActivityResult: "+requestCode);
         switch (requestCode) {
             case CHOOSE_PHOTO:
                 if (resultCode == RESULT_OK) {
@@ -424,10 +429,8 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     MessageBean messageMean = new MessageBean();
                     messageMean.setMine(true);
                     messageMean.setMsgType(Protocol.IMAGE);
-                    messageMean.setNickName(App.getUserBean().getNickName());
-                    messageMean.setUserImageId(App.getUserBean().getUserImageId());
                     messageMean.setImagePath(imagePath);
-                    presenter.sendMessage(messageMean, mPeerIp);
+                    presenter.sendMessage(messageMean, mTargetPeerIp);
                 }else {
 
                 }
@@ -438,10 +441,8 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     MessageBean messageMean = new MessageBean();
                     messageMean.setMine(true);
                     messageMean.setMsgType(Protocol.IMAGE);
-                    messageMean.setNickName(App.getUserBean().getNickName());
-                    messageMean.setUserImageId(App.getUserBean().getUserImageId());
                     messageMean.setImagePath(path);
-                    presenter.sendMessage(messageMean, mPeerIp);
+                    presenter.sendMessage(messageMean, mTargetPeerIp);
                 } else {
                     showToast("获取拍照后的相片路径失败！");
                 }
@@ -451,14 +452,13 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     MessageBean fileMsg = new MessageBean();
                     fileMsg.setMine(true);
                     fileMsg.setMsgType(Protocol.FILE);
-                    fileMsg.setNickName(App.getUserBean().getNickName());
-                    fileMsg.setUserImageId(App.getUserBean().getUserImageId());
+                    fileMsg.setUserIp(mTargetPeerIp);//这里得设置为对方ip，否则在本窗口下 void receiveMessage(MessageBean messageBean) 会丢弃此消息
                     FileBean fileBean = new FileBean();
                     fileBean.setFilePath(SDUtil.getFilePathByUri(ChatDetailActivity.this,data.getData()));
                     fileBean.setFileName(SDUtil.getFileName(fileBean.getFilePath()));
                     fileBean.setFileSize(SDUtil.getFileByteSize(fileBean.getFilePath()));
-                    Log.d(TAG, "onActivityResult: "+fileMsg.toString());
-                    presenter.sendMessage(fileMsg, mPeerIp);
+                    fileMsg.setFileBean(fileBean);
+                    presenter.sendMessage(fileMsg, mTargetPeerIp);
                 } else {
                     showToast("从文件管理器获取文件失败！");
                 }
@@ -503,8 +503,10 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
 
     @Override
     public void sendSuccess(MessageBean messageBean) {
-        mMsgRvAdapter.appendData(messageBean);
-        mHandler.sendEmptyMessage(SCROLL);
+        if (messageBean.getMsgType() != Protocol.FILE){
+            mMsgRvAdapter.appendData(messageBean);
+            mHandler.sendEmptyMessage(SCROLL);
+        }
     }
 
     @Override
@@ -562,12 +564,51 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
         mToolbar.setTitle("");
     }
 
-    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
+    @Subscribe(threadMode = ThreadMode.MAIN)
     public void receiveMessage(MessageBean messageBean) {
-        if (messageBean.getUserIp().equals(mPeerIp)) {
-            Log.d(TAG, "receiveMessage: ");
-            mMsgRvAdapter.appendData(messageBean);
-            mHandler.sendEmptyMessage(SCROLL);
+        if (messageBean.getUserIp().equals(mTargetPeerIp)) {
+            if (messageBean.getMsgType() == Protocol.FILE){
+                FileBean fileBean = messageBean.getFileBean();
+                int position = mMsgRvAdapter.getPositionByFileName(fileBean.getFileName());
+                if (position < 0){
+                    //文件传输的第一次消息传到，要添加到列表并且自动滚动
+                    mMsgRvAdapter.appendData(messageBean);
+                    mHandler.sendEmptyMessage(SCROLL);
+                }else {
+                    if (mMsgRvAdapter.getDataList().get(position).getFileBean()
+                            .getStates() == Constant.SEND_FINISH){
+                        //本人传输同样的文件，要添加到列表并且自动滚动
+                        mMsgRvAdapter.appendData(messageBean);
+                        mHandler.sendEmptyMessage(SCROLL);
+                        return;
+                    }
+                    //更新Adapter中的数据源
+                    mMsgRvAdapter.getDataList().get(position).setFileBean(fileBean);
+                    //更新RecyclerView视图
+                    switch (fileBean.getStates()){
+                        case Constant.RECEIVE_ING:
+                            //局部更新
+                            mMsgRvAdapter.notifyItemChanged(position,Constant.RECEIVE_ING);
+                            break;
+                        case Constant.RECEIVE_FINISH:
+                            mMsgRvAdapter.notifyItemChanged(position);
+                            break;
+
+                        case Constant.SEND_ING:
+                            //局部更新
+                            mMsgRvAdapter.notifyItemChanged(position,Constant.SEND_ING);
+                            break;
+                        case Constant.SEND_FINISH:
+                            mMsgRvAdapter.notifyItemChanged(position);
+                            break;
+
+                    }
+                }
+            }else {
+                //其他消息直接添加到数据源中并更新RecyclerView界面
+                mMsgRvAdapter.appendData(messageBean);
+                mHandler.sendEmptyMessage(SCROLL);
+            }
         }
     }
 }

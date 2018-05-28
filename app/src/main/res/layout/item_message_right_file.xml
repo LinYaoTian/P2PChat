@@ -29,21 +29,18 @@
         <TextView
             android:id="@+id/tv_file_name_right_item_message"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
+            android:layout_height="35dp"
             android:layout_marginStart="8dp"
             android:layout_marginTop="4dp"
-            android:gravity="start|center_vertical"
             android:maxLines="2"
             android:textColor="@color/black"
             android:textSize="@dimen/text_size_small"
             app:layout_constraintBottom_toTopOf="@+id/tv_file_size_right_item_message"
-            app:layout_constraintEnd_toStartOf="@+id/tv_send_status_right_item_message"
-            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintEnd_toEndOf="@+id/pb_sending_progress_right_item_message"
             app:layout_constraintStart_toEndOf="@+id/iv_file_image_right_item_message"
             app:layout_constraintTop_toTopOf="@+id/iv_file_image_right_item_message"
             app:layout_constraintVertical_bias="0.0"
-            tools:text="2018-031.log112321" />
+            tools:text="2018-031.log110321321322321" />
 
         <ImageView
             android:id="@+id/iv_file_image_right_item_message"
@@ -91,7 +88,7 @@
             app:layout_constraintBottom_toBottomOf="@+id/tv_file_size_right_item_message"
             app:layout_constraintEnd_toEndOf="@+id/pb_sending_progress_right_item_message"
             app:layout_constraintTop_toTopOf="@+id/tv_file_size_right_item_message"
-            tools:text="80%" />
+            tools:text="123" />
 
 
 

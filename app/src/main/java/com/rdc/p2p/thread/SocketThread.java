@@ -2,7 +2,6 @@ package com.rdc.p2p.thread;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
@@ -21,12 +20,14 @@ import com.rdc.p2p.manager.SocketManager;
 import com.rdc.p2p.util.GsonUtil;
 import com.rdc.p2p.util.SDUtil;
 
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 /**
@@ -96,10 +97,7 @@ public class SocketThread extends Thread {
                     int size = imageInputStream.available();
                     dos.writeInt(size);
                     byte[] bytes = new byte[size];
-                    imageInputStream.read(bytes);
                     dos.write(bytes);
-                    dos.flush();
-                    Log.d(TAG, "sendImageMsg: "+size);
                     break;
                 case Protocol.AUDIO:
                     FileInputStream audioInputStream = new FileInputStream(messageBean.getAudioPath());
@@ -115,15 +113,40 @@ public class SocketThread extends Thread {
                     dos.writeInt(fileSize);
                     dos.writeUTF(messageBean.getFileBean().getFileName());
                     byte[] fileBytes = new byte[fileSize];
+                    Log.d(TAG, "sendMsg: File start");
                     fileInputStream.read(fileBytes);
-                    dos.write(fileBytes);
-                    dos.flush();
+                    int offset = 0;//每次写入长度
+                    int count = 0;//次数
+                    int denominator;//将总文件分为多少份传输
+                    if (fileSize < 1024*20){
+                        denominator = 1;
+                    }else {
+                        denominator = fileSize / 1024*10;
+                    }
+                    FileBean fileBean = messageBean.getFileBean();
+                    fileBean.setStates(Constant.SEND_ING);
+                    while (true){
+                        count++;
+                        dos.write(fileBytes,offset,fileSize / denominator);
+                        offset += fileSize/denominator;
+                        if (count == denominator){
+                            dos.write(fileBytes,offset,fileSize % denominator);
+                            dos.flush();
+                            fileBean.setStates(Constant.SEND_FINISH);
+                            messageBean.setFileBean(fileBean);
+                            mPresenter.fileSending(messageBean);
+                            break;
+                        }
+                        fileBean.setTransmittedSize(offset);
+                        messageBean.setFileBean(fileBean);
+                        mPresenter.fileSending(messageBean);
+                    }
                     break;
                 case Protocol.CONNECT:
-                    dos.writeUTF(GsonUtil.gsonToJson(messageBean.transformToUserBean()));
+                    dos.writeUTF(GsonUtil.gsonToJson(App.getUserBean()));
                     break;
                 case Protocol.CONNECT_RESPONSE:
-                    dos.writeUTF(GsonUtil.gsonToJson(messageBean.transformToUserBean()));
+                    dos.writeUTF(GsonUtil.gsonToJson(App.getUserBean()));
                     break;
             }
             mHandler.sendMessage(getDelayDestroyMsg());
@@ -134,6 +157,27 @@ public class SocketThread extends Thread {
         return true;
     }
 
+    public boolean sendMsg(UserBean userBean,int msgType){
+        try {
+            DataOutputStream dos = new DataOutputStream(mSocket.getOutputStream());
+            dos.writeInt(msgType);
+            switch (msgType){
+                case Protocol.CONNECT:
+                    dos.writeUTF(GsonUtil.gsonToJson(userBean));
+                    break;
+                case Protocol.CONNECT_RESPONSE:
+                    dos.writeUTF(GsonUtil.gsonToJson(userBean));
+                    break;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false ;
+        }
+        return true;
+    }
+
+
+
     @Override
     public void run() {
         mHandler.sendMessageDelayed(getDestroyMsg(), DELAY_MILLIS);
@@ -141,7 +185,6 @@ public class SocketThread extends Thread {
             DataInputStream dis = new DataInputStream(mSocket.getInputStream());
             //循环读取消息
             while (true){
-                Log.d(TAG, "ip="+ mTargetIp +" start read Protocol !");
                 int type = dis.readInt();
                 mHandler.sendMessage(getDelayDestroyMsg());
                 switch (type) {
@@ -154,14 +197,9 @@ public class SocketThread extends Thread {
                         String u1 = dis.readUTF();
                         mPresenter.addPeer(getPeer(u1));
                         //回复连接响应
-                        MessageBean responseMsg = new MessageBean();
-                        responseMsg.setUserImageId(App.getUserBean().getUserImageId());
-                        responseMsg.setNickName(App.getUserBean().getNickName());
-                        responseMsg.setMsgType(Protocol.CONNECT_RESPONSE);
-                        sendMsg(responseMsg);
+                        sendMsg(App.getUserBean(),Protocol.CONNECT_RESPONSE);
                         break;
                     case Protocol.CONNECT_RESPONSE:
-                        Log.d(TAG, "CONNECT_RESPONSE");
                         String u2 = dis.readUTF();
                         mPresenter.addPeer(getPeer(u2));
                         break;
@@ -176,43 +214,15 @@ public class SocketThread extends Thread {
                         break;
                     case Protocol.IMAGE:
                         int size = dis.readInt();
-                        Log.d(TAG, "getImageMsg: "+size);
                         byte[] bytes = new byte[size];
-
-                        File dirFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/P2P");
-                        File file;
-                        if (dirFile.exists()){
-                            if (!dirFile.isDirectory()){
-                                dirFile.delete();
-                                dirFile.mkdirs();
-                            }
-                        }else {
-                            dirFile.mkdirs();
-                        }
-                        file = new File(dirFile,"林耀填.jpg");
-                        file.createNewFile();
-                        FileOutputStream fos = new FileOutputStream(file);
-                        int transLen = 0;
-                        while(true){
-                            int read = 0;
-                            read = dis.read(bytes);
-                            if(read == -1)
-                                break;
-                            transLen += read;
-                            Log.d(TAG, "run: 接收文件进度"+100 * transLen/size +"%...");
-                            fos.write(bytes,0, read);
-                            fos.flush();
-                        }
-                        Log.d(TAG, "run: 接收文件成功！transLen="+transLen+",size="+size);
-//                        dis.readFully(bytes);
-//                        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes,0,size);
-//                        MessageBean imageMsg = new MessageBean();
-//                        imageMsg.setUserIp(mTargetIp);
-//                        imageMsg.setMine(false);
-//                        imageMsg.setMsgType(Protocol.IMAGE);
-//                        imageMsg.setImagePath(SDUtil.saveBitmap(bitmap,System.currentTimeMillis()+""));
-//                        Log.d(TAG, "run: "+imageMsg.getImagePath());
-//                        mPresenter.messageReceived(imageMsg);
+                        dis.readFully(bytes);
+                        Bitmap bitmap = BitmapFactory.decodeByteArray(bytes,0,size);
+                        MessageBean imageMsg = new MessageBean();
+                        imageMsg.setUserIp(mTargetIp);
+                        imageMsg.setMine(false);
+                        imageMsg.setMsgType(Protocol.IMAGE);
+                        imageMsg.setImagePath(SDUtil.saveBitmap(bitmap,System.currentTimeMillis()+"",".jpg"));
+                        mPresenter.messageReceived(imageMsg);
                         break;
                     case Protocol.AUDIO:
                         int audioSize = dis.readInt();
@@ -228,34 +238,60 @@ public class SocketThread extends Thread {
                     case Protocol.FILE:
                         int fileSize = dis.readInt();
                         String fileName = dis.readUTF();//文件名，包括了文件类型(e.g: pic.jpg)
+                        Log.d(TAG, "run: 接收到一个文件="+fileName);
                         byte[] fileBytes = new byte[fileSize];
-                        dis.readFully(fileBytes);
-                        dis.read(fileBytes);
-                        dis.readFully(fileBytes,0,fileSize);
-                        MessageBean fileMsg = new MessageBean();
-                        fileMsg.setUserIp(mTargetIp);
-                        fileMsg.setMine(false);
-                        fileMsg.setMsgType(Protocol.FILE);
+                        //解析出文件名和类型
                         int dotIndex = fileName.lastIndexOf(".");
                         String fileType;//文件类型(e.g: .jpg)
                         String name;//文件名(e.g: pic)
                         if (dotIndex != -1){
-                             fileType = fileName.substring(dotIndex,fileName.length());
-                             name = fileName.substring(0,dotIndex);
+                            fileType = fileName.substring(dotIndex,fileName.length());
+                            name = fileName.substring(0,dotIndex);
                         }else {
                             //解析不到文件类型
                             fileType = "";
                             name = fileName;
                         }
-
-                        Log.d(TAG, "run: fileName="+fileName+"fileType="+fileType+",name="+name);
-                        FileBean fileBean = new FileBean();
-                        fileBean.setFilePath(SDUtil.saveFile(fileBytes,name,fileType));
-                        fileBean.setFileName(SDUtil.getFileName(fileBean.getFilePath()));
-                        fileBean.setFileSize(SDUtil.getFileByteSize(fileBean.getFilePath()));
-                        fileBean.setStates(Constant.RECEIVE_ING);
-                        fileBean.setTransmittedSize(0);
-                        mPresenter.messageReceived(fileMsg);
+                        File file = SDUtil.getMyAppFile(name,fileType);
+                        if (file != null){
+                            FileBean fileBean = new FileBean();
+                            fileBean.setFilePath(file.getAbsolutePath());
+                            fileBean.setFileName(file.getName());
+                            fileBean.setFileSize(fileSize);
+                            fileBean.setStates(Constant.RECEIVE_ING);
+                            fileBean.setTransmittedSize(0);
+                            MessageBean fileMsg = new MessageBean();
+                            fileMsg.setUserIp(mTargetIp);
+                            fileMsg.setMine(false);
+                            fileMsg.setMsgType(Protocol.FILE);
+                            fileMsg.setFileBean(fileBean);
+                            mPresenter.fileReceiving(fileMsg);
+                            FileOutputStream fos = new FileOutputStream(file);
+                            int transLen = 0;
+                            int countBytes = 0;//计算传输的字节，达到一定数量才更新界面
+                            while(true){
+                                int read;
+                                read = dis.read(fileBytes);
+                                transLen += read;
+                                countBytes += read;
+                                fileBean.setTransmittedSize(transLen);
+                                fos.write(fileBytes,0, read);
+                                if (transLen == fileSize || read == -1){
+                                    fos.flush();
+                                    fos.close();
+                                    fileBean.setStates(Constant.RECEIVE_FINISH);
+                                    mPresenter.fileReceiving(fileMsg);
+                                    break;
+                                }
+                                if (countBytes >= 1024*100){
+                                    //每接收到100KB数据就更新一次界面
+                                    mPresenter.fileReceiving(fileMsg);
+                                    countBytes = 0;
+                                }
+                            }
+                        }else {
+                            mSocket.close();
+                        }
                         break;
                 }
             }

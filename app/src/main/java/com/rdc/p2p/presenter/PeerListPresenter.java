@@ -3,6 +3,7 @@ package com.rdc.p2p.presenter;
 import android.app.Activity;
 
 import com.rdc.p2p.base.BasePresenter;
+import com.rdc.p2p.bean.FileBean;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.contract.PeerListContract;
@@ -144,6 +145,20 @@ public class PeerListPresenter extends BasePresenter<PeerListContract.View> impl
     @Override
     public boolean isServerSocketConnected() {
         return model.isInitServerSocket();
+    }
+
+    @Override
+    public void fileReceiving(MessageBean messageBean) {
+        if (isAttachView()){
+            getMvpView().fileReceiving(messageBean);
+        }
+    }
+
+    @Override
+    public void fileSending(MessageBean messageBean) {
+        if (isAttachView()){
+            getMvpView().fileSending(messageBean);
+        }
     }
 
 }

@@ -22,6 +22,7 @@ import com.rdc.p2p.R;
 import com.rdc.p2p.activity.ChatDetailActivity;
 import com.rdc.p2p.adapter.PeerListRvAdapter;
 import com.rdc.p2p.base.BaseFragment;
+import com.rdc.p2p.bean.FileBean;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.contract.PeerListContract;
@@ -156,7 +157,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
                     showToast("正在建立Socket连接！");
                     mPresenter.linkPeer(peerBean);
                 }else {
-                    ChatDetailActivity.actionStart(mBaseActivity,peerBean.getUserIp(),peerBean.getNickName());
+                    ChatDetailActivity.actionStart(mBaseActivity,peerBean.getUserIp(),peerBean.getNickName(),peerBean.getUserImageId());
                 }
             }
 
@@ -189,10 +190,18 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
         if (peer == null){
             showToast("收到成员列表以外的消息！");
         }else {
-            messageBean.setNickName(peer.getNickName());
-            messageBean.setUserImageId(peer.getUserImageId());
-            EventBus.getDefault().postSticky(messageBean);
+            EventBus.getDefault().post(messageBean);
         }
+    }
+
+    @Override
+    public void fileReceiving(MessageBean messageBean) {
+        EventBus.getDefault().post(messageBean);
+    }
+
+    @Override
+    public void fileSending(MessageBean messageBean) {
+        EventBus.getDefault().post(messageBean);
     }
 
     @Override
@@ -229,7 +238,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
 
     @Override
     public void linkPeerSuccess(PeerBean peerBean) {
-        ChatDetailActivity.actionStart(mBaseActivity,peerBean.getUserIp(),peerBean.getNickName());
+        ChatDetailActivity.actionStart(mBaseActivity,peerBean.getUserIp(),peerBean.getNickName(),peerBean.getUserImageId());
     }
 
     @Override
