@@ -14,4 +14,5 @@
     <string name="tip_none_peers">暂时没有其他成员哦！</string>
     <string name="send">发送</string>
     <string name="tip_pressed_start_record">按住 说话</string>
+    <string name="copy">复制</string>
 </resources>

@@ -10,6 +10,16 @@ public class FileBean {
     private int states;//传输状态
     private int transmittedSize;//已经传输的字节
 
+    public FileBean copy(int states,int transmittedSize){
+        FileBean fileBean = new FileBean();
+        fileBean.setStates(states);
+        fileBean.setTransmittedSize(transmittedSize);
+        fileBean.setFileSize(fileSize);
+        fileBean.setFileName(fileName);
+        fileBean.setFilePath(filePath);
+        return fileBean;
+    }
+
     public String getFilePath() {
         return filePath == null ? "" : filePath;
     }

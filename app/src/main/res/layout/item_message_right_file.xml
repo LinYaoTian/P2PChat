@@ -15,8 +15,12 @@
         tools:src="@drawable/iv_10"
         android:layout_alignParentEnd="true" />
 
+
+
     <android.support.constraint.ConstraintLayout
-        android:id="@+id/cl_right_text_item_message"
+        android:id="@+id/cl_right_file_item_message"
+        android:clickable="true"
+        android:focusable="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/bg_selector_file_message_right"

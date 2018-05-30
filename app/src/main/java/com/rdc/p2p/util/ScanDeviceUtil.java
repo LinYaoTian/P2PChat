@@ -70,6 +70,14 @@ public class ScanDeviceUtil {
         return mExecutor.isTerminated();
     }
 
+    /**
+     * 获取本机IP
+     * @return
+     */
+    public String getDevAddress(){
+        return mDevAddress == null ? "" :mDevAddress;
+    }
+
     public void gc(){
         mRun.gc();
     }

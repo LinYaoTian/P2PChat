@@ -49,7 +49,7 @@ public abstract class BaseRecyclerViewAdapter<T> extends RecyclerView.Adapter {
 
     @Override
     public int getItemCount() {
-        return mDataList == null ? 0:mDataList.size();
+        return mDataList == null ? 0 : mDataList.size();
     }
 
     /**

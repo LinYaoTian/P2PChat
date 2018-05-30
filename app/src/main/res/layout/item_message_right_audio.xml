@@ -15,39 +15,64 @@
         android:layout_alignParentEnd="true" />
 
     <LinearLayout
-        android:id="@+id/ll_right_audio_item_message"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_selector_text_message_right"
-        android:minHeight="50dp"
         android:orientation="horizontal"
-        android:layout_alignTop="@id/civ_head_image_right_item_message"
         android:layout_marginTop="15dp"
         android:layout_marginStart="20dp"
+        android:layout_alignParentStart="true"
+        android:gravity="end"
         android:layout_toStartOf="@id/civ_head_image_right_item_message"
-        android:clickable="true"
-        android:focusable="true">
+        android:layout_alignTop="@id/civ_head_image_right_item_message">
 
-        <TextView
-            android:id="@+id/tv_text_right_item_message"
-            android:layout_width="100dp"
+        <ImageView
+            android:layout_width="23.5dp"
+            android:layout_height="23.5dp"
+            android:id="@+id/iv_alter_right_item_message"
+            android:src="@drawable/iv_alert"
+            android:layout_gravity="center_vertical"
+            android:clickable="true"
+            android:focusable="true"
+            android:visibility="gone"/>
+
+        <ProgressBar
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:id="@+id/pb_msg_sending_right_item_message"
+            android:layout_gravity="center_vertical"/>
+
+        <LinearLayout
+            android:id="@+id/ll_right_audio_item_message"
+            android:layout_width="200dp"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:textColor="@color/white"
-            android:layout_margin="10dp"
-            android:textSize="15sp"
-            tools:text="  " />
+            android:background="@drawable/bg_selector_text_message_right"
+            android:minHeight="50dp"
+            android:orientation="horizontal"
+            android:clickable="true"
+            android:focusable="true">
 
-        <com.rdc.p2p.widget.PlayerSoundView
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginEnd="10dp"
-            android:layout_gravity="center"
-            android:id="@+id/psv_play_sound_right_item_message"
-            playSound:direction="0" />
+            <TextView
+                android:id="@+id/tv_text_right_item_message"
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:textColor="@color/white"
+                android:layout_margin="10dp"
+                android:textSize="15sp"
+                tools:text="  " />
 
+            <com.rdc.p2p.widget.PlayerSoundView
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginEnd="10dp"
+                android:layout_gravity="center"
+                android:id="@+id/psv_play_sound_right_item_message"
+                playSound:direction="0" />
+
+        </LinearLayout>
 
 
     </LinearLayout>
+
 
 </RelativeLayout>

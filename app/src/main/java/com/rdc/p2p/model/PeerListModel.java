@@ -3,7 +3,6 @@ package com.rdc.p2p.model;
 import android.util.Log;
 
 import com.rdc.p2p.app.App;
-import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.contract.PeerListContract;
@@ -104,19 +103,19 @@ public class PeerListModel implements PeerListContract.Model {
     }
 
     @Override
-    public void linkPeers(final List<PeerBean> list) {
+    public void linkPeers(final List<String> list) {
         if (!isInitServerSocket()){
-            mPresenter.linkPeerError("请检查WIFI!");
+            mPresenter.linkPeerError("请检查WIFI!","");
             mPresenter.updatePeerList(new ArrayList<PeerBean>());
         }else {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    for (final PeerBean peerBean : list) {
+                    for (final String targetIp : list) {
                         mExecutor.execute(new Runnable() {
                             @Override
                             public void run() {
-                                linkSocket(peerBean);
+                                linkSocket(targetIp);
                             }
                         });
                     }
@@ -134,22 +133,19 @@ public class PeerListModel implements PeerListContract.Model {
     }
 
     @Override
-    public void linkPeer(final PeerBean peerBean) {
+    public void linkPeer(final String targetIp) {
         mExecutor.execute(new Runnable() {
             @Override
             public void run() {
-                if (linkSocket(peerBean)){
-                    mPresenter.linkPeerSuccess(peerBean);
-                }else {
-                    mPresenter.linkPeerError("建立Socket连接失败，对方已退出网络或网络错误！");
+                if (!linkSocket(targetIp)){
+                    mPresenter.linkPeerError("建立Socket连接失败，对方已退出网络或网络错误！",targetIp);
                 }
             }
         });
     }
 
-    private boolean linkSocket(PeerBean peerBean) {
+    private boolean linkSocket(String targetIp) {
         Socket socket;
-        String targetIp = peerBean.getUserIp();
         try {
             socket = new Socket(targetIp, 3000);
             Log.d(TAG, "linkPeers: ip"+targetIp+"success !");
@@ -166,7 +162,7 @@ public class PeerListModel implements PeerListContract.Model {
             socketManager.addSocketThread(targetIp,socketThread);
             mExecutor.execute(socketThread);
             //发送连接请求
-            return socketThread.sendMsg(App.getUserBean(),Protocol.CONNECT);
+            return socketThread.sendRequest(App.getUserBean(),Protocol.CONNECT);
         }else {
             return false;
         }
@@ -209,9 +205,6 @@ public class PeerListModel implements PeerListContract.Model {
                                     iterator.remove();
                                     continue;
                                 }
-//                                socket.setKeepAlive(true);
-//                                socket.sendUrgentData(0xFF);
-
                                 OutputStream os = socket.getOutputStream();
                                 os.write(Protocol.KEEP_LIVE);
                             } catch (IOException e) {

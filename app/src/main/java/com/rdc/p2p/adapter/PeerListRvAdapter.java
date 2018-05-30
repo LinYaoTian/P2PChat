@@ -44,11 +44,11 @@ public class PeerListRvAdapter extends BaseRecyclerViewAdapter<PeerBean> {
     }
 
     /**
-     * 跟g更新个Item的Text
+     * 更新个Item的Text
      * @param text
      */
-    public PeerBean updateItemText(String text, String targetIp){
-        int index = getIndexByIp(targetIp);
+    public PeerBean updateItemText(String text, String peerIp){
+        int index = getIndexByIp(peerIp);
         if (index != -1){
             PeerBean peer = getDataList().get(index);
             peer.setRecentMessage(text);

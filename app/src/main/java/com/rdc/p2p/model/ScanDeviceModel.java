@@ -3,6 +3,7 @@ package com.rdc.p2p.model;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.rdc.p2p.app.App;
 import com.rdc.p2p.base.BaseModel;
 import com.rdc.p2p.contract.ScanDeviceContract;
 import com.rdc.p2p.presenter.ScanDevicePresenter;
@@ -31,6 +32,7 @@ public class ScanDeviceModel extends BaseModel implements ScanDeviceContract.Mod
                     mPresenter.scanDeviceError("扫描端口失败，请检查WIFI连接！");
                     return;
                 }
+                App.setMyIP(ScanDeviceUtil.getInstance().getDevAddress());
                 Long startTime = System.currentTimeMillis();//开始扫描的时间
                 ScanDeviceUtil.getInstance().scan();//开始扫描
                 while (true) {

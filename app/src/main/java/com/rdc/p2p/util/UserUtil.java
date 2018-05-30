@@ -10,6 +10,17 @@ import com.rdc.p2p.bean.UserBean;
  */
 public class UserUtil {
 
+    public static void saveMyIp(String ip){
+        SharedPreferences.Editor editor = App.getContxet().getSharedPreferences("user",0).edit();
+        editor.putString("ip",ip);
+        editor.apply();
+    }
+
+    public static String getMyIp(){
+        SharedPreferences sp = App.getContxet().getSharedPreferences("user",0);
+        return sp.getString("ip","");
+    }
+
     /**
      * 保存用户信息
      * @param userBean

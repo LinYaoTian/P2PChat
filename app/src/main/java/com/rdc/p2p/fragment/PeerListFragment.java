@@ -8,6 +8,7 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.DividerItemDecoration;
@@ -22,10 +23,11 @@ import com.rdc.p2p.R;
 import com.rdc.p2p.activity.ChatDetailActivity;
 import com.rdc.p2p.adapter.PeerListRvAdapter;
 import com.rdc.p2p.base.BaseFragment;
-import com.rdc.p2p.bean.FileBean;
+import com.rdc.p2p.event.LinkSocketRequestEvent;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.contract.PeerListContract;
+import com.rdc.p2p.event.LinkSocketResponseEvent;
 import com.rdc.p2p.listener.OnClickRecyclerViewListener;
 import com.rdc.p2p.manager.SocketManager;
 import com.rdc.p2p.presenter.PeerListPresenter;
@@ -57,21 +59,24 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
 
     private PeerListRvAdapter mPeerListRvAdapter;
     private WifiReceiver mWifiReceiver;
-    private List<PeerBean> mPeerList;
+    private List<String> mPeerList;
     private boolean isFirstScanDeviceFinished;//第一次扫描设备结束
     private Handler mHandler=new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message message) {
             switch (message.what){
                 case INIT_SERVER_SOCKET:
-                    mPresenter.initSocket(new ArrayList<PeerBean>());
+                    mPresenter.initSocket();
                     break;
             }
             return true;
         }
     });
 
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
 
+    }
 
     @Override
     protected int setLayoutResourceId() {
@@ -86,7 +91,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mPresenter.initSocket(mPeerList);
+        mPresenter.initSocket();
         EventBus.getDefault().register(this);
         mWifiReceiver = new WifiReceiver();
         IntentFilter filter = new IntentFilter();
@@ -111,11 +116,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     @Subscribe(sticky = true,threadMode = ThreadMode.MAIN)
     public void scanDeviceFinished(List<String> ipList){
         mPeerList.clear();
-        for (String s : ipList) {
-            PeerBean peerBean = new PeerBean();
-            peerBean.setUserIp(s);
-            mPeerList.add(peerBean);
-        }
+        mPeerList.addAll(ipList);
         if (isFirstScanDeviceFinished){
             //第一次扫描成功
             isFirstScanDeviceFinished = false;
@@ -125,6 +126,11 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
                 mPeerList.clear();
             }
         }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void linkSocket(LinkSocketRequestEvent linkSocketRequestEvent){
+        mPresenter.linkPeer(linkSocketRequestEvent.getTargetIp());
     }
 
     public boolean isServerSocketConnected(){
@@ -155,7 +161,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
                 PeerBean peerBean = mPeerListRvAdapter.getDataList().get(position);
                 if (SocketManager.getInstance().isClosedSocket(peerBean.getUserIp())){
                     showToast("正在建立Socket连接！");
-                    mPresenter.linkPeer(peerBean);
+                    mPresenter.linkPeer(peerBean.getUserIp());
                 }else {
                     ChatDetailActivity.actionStart(mBaseActivity,peerBean.getUserIp(),peerBean.getNickName(),peerBean.getUserImageId());
                 }
@@ -172,7 +178,6 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     @Override
     public void updatePeerList(List<PeerBean> list) {
         if (list.size() == 0){
-            Log.d(TAG, "updatePeerList: size=0");
             mRvPeerList.setVisibility(View.GONE);
             mLlLoadingPeersInfo.setVisibility(View.GONE);
             mTvTipNonePeer.setVisibility(View.VISIBLE);
@@ -200,11 +205,6 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     }
 
     @Override
-    public void fileSending(MessageBean messageBean) {
-        EventBus.getDefault().post(messageBean);
-    }
-
-    @Override
     public void addPeer(PeerBean peerBean) {
         Log.d(TAG, "addPeer: "+peerBean.getUserIp());
         mRvPeerList.setVisibility(View.VISIBLE);
@@ -212,6 +212,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
         mTvTipNonePeer.setVisibility(View.GONE);
         if (mPeerListRvAdapter.isContained(peerBean.getUserIp())){
             mPeerListRvAdapter.updateItem(peerBean);
+            EventBus.getDefault().post(new LinkSocketResponseEvent(true,peerBean));
         }else {
             mPeerListRvAdapter.addItem(peerBean);
         }
@@ -242,8 +243,11 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     }
 
     @Override
-    public void linkPeerError(String message) {
+    public void linkPeerError(String message,String targetIp) {
         showToast(message);
+        PeerBean peerBean = new PeerBean();
+        peerBean.setUserIp(targetIp);
+        EventBus.getDefault().post(new LinkSocketResponseEvent(false,peerBean));
     }
 
     @Override

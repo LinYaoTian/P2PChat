@@ -8,16 +8,17 @@ import java.util.Date;
 /**
  * Created by Lin Yaotian on 2018/5/16.
  */
-public class MessageBean implements Cloneable {
+public class MessageBean{
 
-    private String userIp;
+    private String userIp;//消息发送方IP
     private String text;
     private String time;
     private String imagePath;
     private String audioPath;
     private FileBean fileBean;
-    private int msgType;//消息类型 音频/图片/文字
-    private boolean isMine;//是否是本人的消息
+    private int msgType;//消息类型 音频/图片/文字/文件
+    private boolean isMine;//是否是本人发的消息
+    private int sendStatus;//若为本人发的音频/图片/文字消息，发送状态有 SEND_FILE_ING ,SEND_FINISH,SEND_ERROR
 
     @Override
     public String toString() {
@@ -31,6 +32,14 @@ public class MessageBean implements Cloneable {
                 ", msgType=" + msgType +
                 ", isMine=" + isMine +
                 '}';
+    }
+
+    public int getSendStatus() {
+        return sendStatus;
+    }
+
+    public void setSendStatus(int sendStatus) {
+        this.sendStatus = sendStatus;
     }
 
     public FileBean getFileBean() {

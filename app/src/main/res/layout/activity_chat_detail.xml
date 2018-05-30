@@ -37,17 +37,16 @@
         <EditText
             android:id="@+id/et_input_act_chat_detail"
             android:layout_width="0dp"
-            android:layout_height="48dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="5dp"
+            android:layout_height="wrap_content"
             android:layout_marginEnd="5dp"
+            android:layout_marginStart="8dp"
             android:maxLines="3"
+            android:minHeight="48dp"
             android:theme="@style/EditTextTheme"
             app:layout_constraintBottom_toTopOf="@+id/iv_take_photo_act_chat_detail"
             app:layout_constraintEnd_toStartOf="@+id/btn_send_chat_detail"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:layout_width="0dp"
@@ -68,21 +67,17 @@
             android:focusable="true" />
 
 
-
-
         <Button
             android:id="@+id/btn_send_chat_detail"
             android:layout_width="50dp"
             android:layout_height="35dp"
             android:layout_marginBottom="8dp"
             android:layout_marginEnd="5dp"
-            android:layout_marginTop="8dp"
             android:background="@drawable/bg_send"
             android:text="@string/send"
             android:textColor="@color/white"
             app:layout_constraintBottom_toBottomOf="@+id/et_input_act_chat_detail"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintEnd_toEndOf="parent" />
 
         <ImageView
             android:id="@+id/iv_take_photo_act_chat_detail"

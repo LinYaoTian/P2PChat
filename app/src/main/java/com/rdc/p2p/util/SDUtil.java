@@ -7,6 +7,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 
 import android.content.ContentUris;
@@ -19,12 +20,14 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.v4.content.FileProvider;
 import android.support.v4.content.MimeTypeFilter;
 import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
+import com.rdc.p2p.activity.ChatDetailActivity;
 import com.rdc.p2p.app.App;
 public class SDUtil {
 
@@ -38,25 +41,8 @@ public class SDUtil {
      */
     public static String saveBitmap(Bitmap bm, String name,String type) {
         try {
-            File dirFile = new File(Environment.getExternalStorageDirectory().getAbsolutePath()+"/P2P");
-            File file;
-            if (dirFile.exists()){
-                if (!dirFile.isDirectory()){
-                    dirFile.delete();
-                    dirFile.mkdirs();
-                }
-            }else {
-                dirFile.mkdirs();
-            }
-            while (true){
-                file = new File(dirFile,name+type);
-                if (file.exists()){
-                    name = name+"&";
-                }else {
-                    file.createNewFile();
-                    break;
-                }
-            }
+            File file = getMyAppFile(name,type);
+            assert file != null;
             FileOutputStream out = new FileOutputStream(file);
             bm.compress(Bitmap.CompressFormat.PNG, 70, out);
             out.flush();
@@ -202,25 +188,6 @@ public class SDUtil {
     }
 
     /**
-     * 获取文件的大小(e.g: 14.1 KB)
-     * @param filePath
-     * @return
-     */
-    public static String getFileSize(String filePath){
-        File file = new File(filePath);
-        double fileSize = file.length();
-        DecimalFormat df = new DecimalFormat(".0");
-
-        if (fileSize > 1024*1024){
-            return df.format(fileSize/(1024*1024))+" MB";
-        }else if (fileSize > 1024){
-            return df.format(fileSize/1024)+" KB";
-        }else {
-            return fileSize+" B";
-        }
-    }
-
-    /**
      * 获取文件的字节大小
      * @param filePath
      * @return
@@ -229,6 +196,11 @@ public class SDUtil {
         return (int) new File(filePath).length();
     }
 
+    /**
+     * 将字节按合适比例转换为B/KB/MB
+     * @param bytesSize
+     * @return
+     */
     public static String  bytesTransform(int bytesSize){
         double fileSize = bytesSize;
         DecimalFormat df = new DecimalFormat(".0");
@@ -385,6 +357,45 @@ public class SDUtil {
             uri = Uri.fromFile(file);
         }
         return uri;
+    }
+
+    private static String renameFile(String filePath){
+        String fileName = getFileName(filePath);
+        String type;
+        String name;
+        //获取后缀名前的分隔符"."在fName中的位置。
+        int dotIndex = fileName.lastIndexOf(".");
+        if (dotIndex > 0) {
+            //获取文件的后缀名
+            type = fileName.substring(dotIndex, fileName.length());
+            name = fileName.substring(0,dotIndex);
+        }else {
+            name = fileName;
+            type = "";
+        }
+        File oldFile = new File(filePath);
+        File newFile = getMyAppFile(name,type);
+        oldFile.renameTo(newFile);
+        assert newFile != null;
+        return newFile.getAbsolutePath();
+    }
+
+    /**
+     * 检查是否在列表上已经存在该文件，若是，则修改文件名，直到不重名为止
+     * @param fileNameList 在列表上的文件名集合
+     * @param uri 文件Uri
+     * @return
+     */
+    public static String checkFileName(@NonNull List<String> fileNameList, Uri uri){
+        String filePath = getFilePathByUri(App.getContxet(),uri);
+        while (true){
+            if (fileNameList.contains(getFileName(filePath))){
+                filePath = renameFile(filePath);
+            }else {
+                break;
+            }
+        }
+        return filePath;
     }
 
 

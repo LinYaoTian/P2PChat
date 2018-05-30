@@ -85,12 +85,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     }
 
     @Override
-    public void recreate() {
-        super.recreate();
-        mPeerListFragment = new PeerListFragment();
-    }
-
-    @Override
     public BasePresenter getInstance() {
         return null;
     }
@@ -128,13 +122,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 return 1;
             }
         });
-
-        List<ScanDeviceFragment> fragmentList = new ArrayList<>();
-        for (int i = 0; i < 2; i++) {
-            ScanDeviceFragment fragment = new ScanDeviceFragment();
-            fragment.setData(i+"");
-            fragmentList.add(fragment);
-        }
     }
 
     private void initToolbar() {

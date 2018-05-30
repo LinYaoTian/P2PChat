@@ -2,7 +2,9 @@ package com.rdc.p2p.manager;
 
 import android.util.Log;
 
+import com.rdc.p2p.app.App;
 import com.rdc.p2p.bean.MessageBean;
+import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.bean.UserBean;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.thread.SocketThread;
@@ -62,6 +64,8 @@ public class SocketManager {
         }
         return mSocketManager;
     }
+
+
 
     /**
      * 根据ip获取SocketThread

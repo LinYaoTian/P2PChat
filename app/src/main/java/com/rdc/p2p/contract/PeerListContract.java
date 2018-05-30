@@ -1,9 +1,7 @@
 package com.rdc.p2p.contract;
 
-import com.rdc.p2p.bean.FileBean;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
-import com.rdc.p2p.listener.ServerSocketInitCallback;
 
 import java.util.List;
 
@@ -16,19 +14,18 @@ public interface PeerListContract {
         void updatePeerList(List<PeerBean> list);
         void messageReceived(MessageBean messageBean);
         void fileReceiving(MessageBean messageBean);
-        void fileSending(MessageBean messageBean);
         void addPeer(PeerBean peerBean);
         void removePeer(String ip);
         void serverSocketError(String msg);
         void linkPeerSuccess(PeerBean peerBean);
-        void linkPeerError(String message);
+        void linkPeerError(String message,String targetIp);
         void initServerSocketSuccess();
     }
 
     interface Model{
         void initServerSocket();
-        void linkPeers(List<PeerBean> list);
-        void linkPeer(PeerBean peerBean);
+        void linkPeers(List<String> list);
+        void linkPeer(String targetIp);
         void disconnect();
         boolean isInitServerSocket();
     }
@@ -36,11 +33,11 @@ public interface PeerListContract {
     interface Presenter{
         void disconnect();
         void initServerSocketSuccess();
-        void initSocket(List<PeerBean> list);
-        void linkPeers(List<PeerBean> list);
-        void linkPeer(PeerBean peerBean);
+        void initSocket();
+        void linkPeers(List<String> list);
+        void linkPeer(String targetIp);
         void linkPeerSuccess(PeerBean peerBean);
-        void linkPeerError(String message);
+        void linkPeerError(String message,String targetIp);
         void updatePeerList(List<PeerBean> list);
         void addPeer(PeerBean peerBean);
         void messageReceived(MessageBean messageBean);
@@ -48,7 +45,6 @@ public interface PeerListContract {
         void serverSocketError(String msg);
         boolean isServerSocketConnected();
         void fileReceiving(MessageBean messageBean);
-        void fileSending(MessageBean messageBean);
     }
 
 }

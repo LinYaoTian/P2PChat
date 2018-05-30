@@ -9,6 +9,7 @@ public class Protocol {
     public static final int IMAGE = 1;//图片
     public static final int AUDIO = 2;//音频
     public static final int FILE = 7;
+    public static final int FILE_RECEIVED = 8;//文件接收完成！
     public static final int CONNECT = 3;//连接请求
     public static final int CONNECT_RESPONSE = 4;//连接请求响应
     public static final int DISCONNECT = 5;//断开连接

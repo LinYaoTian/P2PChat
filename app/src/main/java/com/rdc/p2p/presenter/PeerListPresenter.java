@@ -3,11 +3,9 @@ package com.rdc.p2p.presenter;
 import android.app.Activity;
 
 import com.rdc.p2p.base.BasePresenter;
-import com.rdc.p2p.bean.FileBean;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.contract.PeerListContract;
-import com.rdc.p2p.listener.ServerSocketInitCallback;
 import com.rdc.p2p.model.PeerListModel;
 
 import java.util.List;
@@ -44,19 +42,20 @@ public class PeerListPresenter extends BasePresenter<PeerListContract.View> impl
     }
 
     @Override
-    public void initSocket(final List<PeerBean> list) {
+    public void initSocket() {
         model.initServerSocket();
     }
 
     @Override
-    public void linkPeers(List<PeerBean> list) {
+    public void linkPeers(List<String> list) {
         model.linkPeers(list);
     }
 
     @Override
-    public void linkPeer(PeerBean peerBean) {
-        model.linkPeer(peerBean);
+    public void linkPeer(String targetIp) {
+        model.linkPeer(targetIp);
     }
+
 
     @Override
     public void linkPeerSuccess(final PeerBean peerBean) {
@@ -71,16 +70,17 @@ public class PeerListPresenter extends BasePresenter<PeerListContract.View> impl
     }
 
     @Override
-    public void linkPeerError(final String message) {
+    public void linkPeerError(final String message, final String targetIp) {
         if (isAttachView()){
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    getMvpView().linkPeerError(message);
+                    getMvpView().linkPeerError(message,targetIp);
                 }
             });
         }
     }
+
 
     @Override
     public void updatePeerList(final List<PeerBean> list) {
@@ -151,13 +151,6 @@ public class PeerListPresenter extends BasePresenter<PeerListContract.View> impl
     public void fileReceiving(MessageBean messageBean) {
         if (isAttachView()){
             getMvpView().fileReceiving(messageBean);
-        }
-    }
-
-    @Override
-    public void fileSending(MessageBean messageBean) {
-        if (isAttachView()){
-            getMvpView().fileSending(messageBean);
         }
     }
 

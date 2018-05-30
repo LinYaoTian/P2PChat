@@ -2,6 +2,8 @@ package com.rdc.p2p.activity;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -20,6 +22,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.ActionBar;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
@@ -40,11 +43,14 @@ import com.rdc.p2p.R;
 import com.rdc.p2p.adapter.MsgRvAdapter;
 import com.rdc.p2p.base.BaseActivity;
 import com.rdc.p2p.bean.FileBean;
+import com.rdc.p2p.bean.PeerBean;
+import com.rdc.p2p.event.LinkSocketRequestEvent;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.config.Constant;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.contract.ChatDetailContract;
-import com.rdc.p2p.listener.OnClickRecyclerViewListener;
+import com.rdc.p2p.event.LinkSocketResponseEvent;
+import com.rdc.p2p.listener.OnItemViewClickListener;
 import com.rdc.p2p.presenter.ChatDetailPresenter;
 import com.rdc.p2p.util.AudioRecorderUtil;
 import com.rdc.p2p.util.MediaPlayerUtil;
@@ -70,6 +76,7 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     private static final int TAKE_PHOTO = 3;
     private static final int FILE_MANAGER = 4;
     private static final int SCROLL = -1;//滑动到底部
+    private static final int SCROLL_NOW = -3;//立即滚动到底部
     private static final int HIDE_SOFT_INPUT = -2;//隐藏软键盘
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
@@ -112,10 +119,17 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
         public boolean handleMessage(Message message) {
             switch (message.what) {
                 case SCROLL:
+                    int lastItemPosition = mMsgRvAdapter.getItemCount() - 1;
+                    if (lastItemPosition >= 0 &&
+                            mRvMsgList.getScrollState() == RecyclerView.SCROLL_STATE_IDLE){
+                        //如果当前用户没有拖动列表，则自动滚动到最后一个
+                        mRvMsgList.smoothScrollToPosition(lastItemPosition);
+                    }
+                    break;
+                case SCROLL_NOW:
                     if (mMsgRvAdapter.getItemCount() - 1 > 0) {
                         mRvMsgList.smoothScrollToPosition(mMsgRvAdapter.getItemCount() - 1);
                     }
-                    break;
                 case HIDE_SOFT_INPUT:
                     hideKeyboard();
                     break;
@@ -193,8 +207,8 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
         initToolbar();
         mTvTitle.setText(mTargetPeerName);
         mMsgRvAdapter = new MsgRvAdapter(mTargetPeerImageId);
-        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
-        mRvMsgList.setLayoutManager(linearLayoutManager);
+        LinearLayoutManager mLLManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+        mRvMsgList.setLayoutManager(mLLManager);
         mRvMsgList.setAdapter(mMsgRvAdapter);
         mRvMsgList.getItemAnimator().setChangeDuration(0);
         View view = View.inflate(this, R.layout.popupwindow_micorphone, null);
@@ -210,9 +224,74 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void initListener() {
-        mMsgRvAdapter.setOnAudioClickListener(new MsgRvAdapter.OnAudioClickListener() {
+        mMsgRvAdapter.setOnItemViewClickListener(new OnItemViewClickListener() {
             @Override
-            public void onClick(PlayerSoundView psvPlaySound, String audioUrl) {
+            public void onImageClick(int position) {
+                List<String> list = new ArrayList<>();
+                for (MessageBean messageBean : mMsgRvAdapter.getDataList()) {
+                    if (messageBean.getMsgType() == Protocol.IMAGE) {
+                        //获取所有的图片本地地址
+                        list.add(messageBean.getImagePath());
+                    }
+                }
+                String currentImagePath = mMsgRvAdapter.getDataList().get(position).getImagePath();
+                PhotoActivity.actionStart(ChatDetailActivity.this,list,list.indexOf(currentImagePath));
+            }
+
+            @SuppressLint("ResourceType")
+            @Override
+            public void onTextLongClick(final int position,View view) {
+                PopupMenu popupMenu = new PopupMenu(ChatDetailActivity.this, view);
+                popupMenu.getMenuInflater().inflate(R.menu.copy_menu, popupMenu.getMenu());
+                popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.menu_copy:
+                                ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                                ClipData cd = ClipData.newPlainText("Label", mMsgRvAdapter.getDataList().get(position).getText());
+                                cm.setPrimaryClip(cd);
+                                showToast("已复制");
+                                break;
+                        }
+                        return true;
+                    }
+                });
+                popupMenu.show();
+            }
+
+            @Override
+            public void onFileClick(int position) {
+                MessageBean bean = mMsgRvAdapter.getDataList().get(position);
+                if (bean.getFileBean().getStates() == Constant.RECEIVE_FILE_FINISH
+                        || bean.getFileBean().getStates() == Constant.SEND_FILE_FINISH){
+                    String mineType = SDUtil.getMimeTypeFromFilePath(bean.getFileBean().getFilePath());
+                    if (mineType != null){
+                        Intent intent = new Intent();
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                        intent.setAction(Intent.ACTION_VIEW);
+                        intent.addCategory(Intent.CATEGORY_DEFAULT);
+                        intent.setDataAndType(SDUtil.getFileUri(bean.getFileBean().getFilePath()),mineType);
+                        List<ResolveInfo> list = getPackageManager().queryIntentActivities(intent, 0);
+                        if (list.size() == 0){
+                            showToast("无法打开此类型的文件!");
+                        }else {
+                            startActivity(intent);
+                        }
+                    }else {
+                        showToast("无法打开此类型的文件!");
+                    }
+                }
+            }
+
+            @Override
+            public void onAlterClick(int position) {
+                linkSocket();
+            }
+
+            @Override
+            public void onAudioClick(PlayerSoundView psvPlaySound, String audioUrl) {
                 if (mPsvIsPlaying != null) {
                     //有正在播放的音频
                     mMediaPlayerUtil.stopPlayer();
@@ -228,58 +307,6 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                 mMediaPlayerUtil.startPlayer(audioUrl);
             }
         });
-        mMsgRvAdapter.setOnRecyclerViewListener(new OnClickRecyclerViewListener() {
-            @Override
-            public void onItemClick(int position) {
-                MessageBean bean = mMsgRvAdapter.getDataList().get(position);
-                switch (bean.getMsgType()) {
-                    case Protocol.TEXT:
-
-                        break;
-                    case Protocol.FILE:
-                        if (bean.getFileBean().getStates() != Constant.RECEIVE_ING
-                                || bean.getFileBean().getStates() != Constant.SEND_ING){
-                            String mineType = SDUtil.getMimeTypeFromFilePath(bean.getFileBean().getFilePath());
-                            if (mineType != null){
-                                Intent intent = new Intent();
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                                intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                                intent.setAction(Intent.ACTION_VIEW);
-                                intent.addCategory(Intent.CATEGORY_DEFAULT);
-                                intent.setDataAndType(SDUtil.getFileUri(bean.getFileBean().getFilePath()),mineType);
-                                List<ResolveInfo> list = getPackageManager().queryIntentActivities(intent, 0);
-                                if (list.size() == 0){
-                                    showToast("无法打开此类型的文件!");
-                                }else {
-                                    startActivity(intent);
-                                }
-                            }else {
-                                showToast("无法打开此类型的文件!");
-                            }
-                            break;
-                        }else {
-
-                        }
-                    case Protocol.IMAGE:
-                        List<String> list = new ArrayList<>();
-                        for (MessageBean messageBean : mMsgRvAdapter.getDataList()) {
-                            if (messageBean.getMsgType() == Protocol.IMAGE) {
-                                //获取所有的图片本地地址
-                                list.add(messageBean.getImagePath());
-                            }
-                        }
-                        String currentImagePath = mMsgRvAdapter.getDataList().get(position).getImagePath();
-                        PhotoActivity.actionStart(ChatDetailActivity.this,list,list.indexOf(currentImagePath));
-
-                        break;
-                }
-            }
-
-            @Override
-            public boolean onItemLongClick(int position) {
-                return false;
-            }
-        });
         mBtnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -288,7 +315,10 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     messageMean.setMine(true);
                     messageMean.setMsgType(Protocol.TEXT);
                     messageMean.setText(getString(mEtInput));
-                    presenter.sendMessage(messageMean, mTargetPeerIp);
+                    messageMean.setSendStatus(Constant.SEND_MSG_ING);
+                    mMsgRvAdapter.appendData(messageMean);
+                    mHandler.sendEmptyMessage(SCROLL_NOW);
+                    presenter.sendMsg(messageMean, mTargetPeerIp,mMsgRvAdapter.getItemCount()-1);
                     mEtInput.setText("");
                 }
             }
@@ -361,12 +391,16 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
             }
 
             @Override
-            public void onStop(String filePath) {
+            public void onStop(String audioPath) {
+                //录音结束，自动发送音频消息
                 MessageBean messageMean = new MessageBean();
                 messageMean.setMine(true);
                 messageMean.setMsgType(Protocol.AUDIO);
-                messageMean.setAudioPath(filePath);
-                presenter.sendMessage(messageMean, mTargetPeerIp);
+                messageMean.setAudioPath(audioPath);
+                messageMean.setSendStatus(Constant.SEND_MSG_ING);
+                mMsgRvAdapter.appendData(messageMean);
+                mHandler.sendEmptyMessage(SCROLL_NOW);
+                presenter.sendMsg(messageMean, mTargetPeerIp,mMsgRvAdapter.getItemCount()-1);
             }
         });
         mTvPressedStartRecord.setOnTouchListener(new View.OnTouchListener() {
@@ -430,19 +464,22 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     messageMean.setMine(true);
                     messageMean.setMsgType(Protocol.IMAGE);
                     messageMean.setImagePath(imagePath);
-                    presenter.sendMessage(messageMean, mTargetPeerIp);
-                }else {
-
+                    messageMean.setSendStatus(Constant.SEND_MSG_ING);
+                    mMsgRvAdapter.appendData(messageMean);
+                    mHandler.sendEmptyMessage(SCROLL_NOW);
+                    presenter.sendMsg(messageMean, mTargetPeerIp,mMsgRvAdapter.getItemCount()-1);
                 }
                 break;
             case TAKE_PHOTO:
                 if (resultCode == RESULT_OK) {
-                    String path = mTakePhotoFile.getAbsolutePath();
                     MessageBean messageMean = new MessageBean();
                     messageMean.setMine(true);
                     messageMean.setMsgType(Protocol.IMAGE);
-                    messageMean.setImagePath(path);
-                    presenter.sendMessage(messageMean, mTargetPeerIp);
+                    messageMean.setImagePath(mTakePhotoFile.getAbsolutePath());
+                    messageMean.setSendStatus(Constant.SEND_MSG_ING);
+                    mMsgRvAdapter.appendData(messageMean);
+                    mHandler.sendEmptyMessage(SCROLL_NOW);
+                    presenter.sendMsg(messageMean, mTargetPeerIp,mMsgRvAdapter.getItemCount()-1);
                 } else {
                     showToast("获取拍照后的相片路径失败！");
                 }
@@ -454,11 +491,14 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     fileMsg.setMsgType(Protocol.FILE);
                     fileMsg.setUserIp(mTargetPeerIp);//这里得设置为对方ip，否则在本窗口下 void receiveMessage(MessageBean messageBean) 会丢弃此消息
                     FileBean fileBean = new FileBean();
-                    fileBean.setFilePath(SDUtil.getFilePathByUri(ChatDetailActivity.this,data.getData()));
+                    fileBean.setFilePath(SDUtil.checkFileName(mMsgRvAdapter.getFileNameList(),data.getData()));
                     fileBean.setFileName(SDUtil.getFileName(fileBean.getFilePath()));
                     fileBean.setFileSize(SDUtil.getFileByteSize(fileBean.getFilePath()));
+                    fileBean.setTransmittedSize(0);
                     fileMsg.setFileBean(fileBean);
-                    presenter.sendMessage(fileMsg, mTargetPeerIp);
+                    mMsgRvAdapter.appendData(fileMsg);
+                    mHandler.sendEmptyMessage(SCROLL_NOW);
+                    presenter.sendMsg(fileMsg, mTargetPeerIp,mMsgRvAdapter.getItemCount()-1);
                 } else {
                     showToast("从文件管理器获取文件失败！");
                 }
@@ -502,16 +542,30 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     }
 
     @Override
-    public void sendSuccess(MessageBean messageBean) {
-        if (messageBean.getMsgType() != Protocol.FILE){
-            mMsgRvAdapter.appendData(messageBean);
-            mHandler.sendEmptyMessage(SCROLL);
-        }
+    public void linkSocket() {
+        LinkSocketRequestEvent linkSocketRequestEvent = new LinkSocketRequestEvent(mTargetPeerIp);
+        EventBus.getDefault().post(linkSocketRequestEvent);
     }
 
     @Override
-    public void sendError(String message) {
-        showToast(message);
+    public void sendMsgSuccess(int position) {
+        //设置状态
+        mMsgRvAdapter.getDataList().get(position).setSendStatus(Constant.SEND_MSG_FINISH);
+        mMsgRvAdapter.notifyItemChanged(position,Constant.UPDATE_SEND_MSG_STATE);
+    }
+
+    @Override
+    public void sendMsgError(int position, String error) {
+        //设置状态
+        mMsgRvAdapter.getDataList().get(position).setSendStatus(Constant.SEND_MSG_ERROR);
+        mMsgRvAdapter.notifyItemChanged(position,Constant.UPDATE_SEND_MSG_STATE);
+        showToast(error);
+    }
+
+    @Override
+    public void fileSending(int position, FileBean fileBean) {
+        mMsgRvAdapter.getDataList().get(position).setFileBean(fileBean);
+        mMsgRvAdapter.notifyItemChanged(position,Constant.UPDATE_FILE_STATE);
     }
 
     @Override
@@ -567,48 +621,39 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void receiveMessage(MessageBean messageBean) {
         if (messageBean.getUserIp().equals(mTargetPeerIp)) {
+            Log.d(TAG, "receiveMessage: "+messageBean.toString());
             if (messageBean.getMsgType() == Protocol.FILE){
                 FileBean fileBean = messageBean.getFileBean();
-                int position = mMsgRvAdapter.getPositionByFileName(fileBean.getFileName());
-                if (position < 0){
+                if (fileBean.getStates() == Constant.RECEIVE_FILE_START){
                     //文件传输的第一次消息传到，要添加到列表并且自动滚动
                     mMsgRvAdapter.appendData(messageBean);
                     mHandler.sendEmptyMessage(SCROLL);
-                }else {
-                    if (mMsgRvAdapter.getDataList().get(position).getFileBean()
-                            .getStates() == Constant.SEND_FINISH){
-                        //本人传输同样的文件，要添加到列表并且自动滚动
-                        mMsgRvAdapter.appendData(messageBean);
-                        mHandler.sendEmptyMessage(SCROLL);
-                        return;
-                    }
+                    return;
+                }
+                int position = mMsgRvAdapter.getPositionByFileName(fileBean.getFileName());
+                if (position >= 0) {
                     //更新Adapter中的数据源
                     mMsgRvAdapter.getDataList().get(position).setFileBean(fileBean);
                     //更新RecyclerView视图
-                    switch (fileBean.getStates()){
-                        case Constant.RECEIVE_ING:
-                            //局部更新
-                            mMsgRvAdapter.notifyItemChanged(position,Constant.RECEIVE_ING);
-                            break;
-                        case Constant.RECEIVE_FINISH:
-                            mMsgRvAdapter.notifyItemChanged(position);
-                            break;
-
-                        case Constant.SEND_ING:
-                            //局部更新
-                            mMsgRvAdapter.notifyItemChanged(position,Constant.SEND_ING);
-                            break;
-                        case Constant.SEND_FINISH:
-                            mMsgRvAdapter.notifyItemChanged(position);
-                            break;
-
-                    }
+                    mMsgRvAdapter.notifyItemChanged(position,Constant.UPDATE_FILE_STATE);
                 }
             }else {
                 //其他消息直接添加到数据源中并更新RecyclerView界面
                 mMsgRvAdapter.appendData(messageBean);
                 mHandler.sendEmptyMessage(SCROLL);
             }
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void linkSocketState(LinkSocketResponseEvent responseEvent){
+        PeerBean peerBean = responseEvent.getPeerBean();
+        if (peerBean.getUserIp().equals(mTargetPeerIp)){
+            if (responseEvent.isState()){
+                mTargetPeerImageId = peerBean.getUserImageId();
+                mTargetPeerName = peerBean.getNickName();
+            }
+            presenter.setLinkSocketState(responseEvent.isState());
         }
     }
 }
