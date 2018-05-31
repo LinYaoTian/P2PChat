@@ -1,6 +1,7 @@
 package com.rdc.p2p.presenter;
 
 import android.app.Activity;
+import android.util.Log;
 
 import com.rdc.p2p.base.BasePresenter;
 import com.rdc.p2p.bean.FileBean;
@@ -19,10 +20,12 @@ public class ChatDetailPresenter extends BasePresenter<ChatDetailContract.View> 
 
     private ChatDetailContract.Model mModel;
     private Activity mActivity;
+    private String mTargetIp;
 
-    public ChatDetailPresenter(Activity activity){
+    public ChatDetailPresenter(Activity activity,String targetIp){
         mModel = new ChatDetailModel(this);
         mActivity = activity;
+        mTargetIp = targetIp;
     }
 
     @Override
@@ -43,9 +46,7 @@ public class ChatDetailPresenter extends BasePresenter<ChatDetailContract.View> 
     }
 
     @Override
-    public void sendMsg(final MessageBean msg, final String targetIp, final int position) {
-        if (mModel.getLinkSocketState()){
-            //Socket 已连接
+    public void sendMsg(final MessageBean msg, final int position) {
             if (msg.getMsgType() == Protocol.IMAGE){
                 //压缩图片
                 ImageUtil.compressImage(msg.getImagePath(), new FileCallback() {
@@ -54,20 +55,17 @@ public class ChatDetailPresenter extends BasePresenter<ChatDetailContract.View> 
                         if (isSuccess){
                             msg.setImagePath(outfile);
                         }
-                        mModel.sendMessage(msg,targetIp,position);
+                        mModel.sendMessage(msg,mTargetIp,position);
                     }
                 });
             }else {
-                mModel.sendMessage(msg,targetIp,position);
+                mModel.sendMessage(msg,mTargetIp,position);
             }
-        }else {
             if (msg.getMsgType() == Protocol.FILE){
-                msg.getFileBean().setStates(Constant.SEND_FILE_ERROR);
-                fileSending(position,msg.getFileBean());
+                msg.transformMessageEntity(mTargetIp).saveOrUpdate("targetIp = ? and filePath = ?",mTargetIp,msg.getFileBean().getFilePath());
             }else {
-                sendMsgError(position,"Socket连接已断开！");
+                msg.transformMessageEntity(mTargetIp).saveOrUpdate("targetIp = ? and sendStatus = 1",mTargetIp);
             }
-        }
     }
 
     @Override

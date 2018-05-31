@@ -23,6 +23,9 @@ import com.rdc.p2p.R;
 import com.rdc.p2p.activity.ChatDetailActivity;
 import com.rdc.p2p.adapter.PeerListRvAdapter;
 import com.rdc.p2p.base.BaseFragment;
+import com.rdc.p2p.bean.FileBean;
+import com.rdc.p2p.bean.MessageEntity;
+import com.rdc.p2p.config.Constant;
 import com.rdc.p2p.event.LinkSocketRequestEvent;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
@@ -35,6 +38,7 @@ import com.rdc.p2p.presenter.PeerListPresenter;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.litepal.crud.DataSupport;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -195,6 +199,7 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
         if (peer == null){
             showToast("收到成员列表以外的消息！");
         }else {
+            messageBean.transformMessageEntity(peer.getUserIp()).save();
             EventBus.getDefault().post(messageBean);
         }
     }
@@ -202,6 +207,9 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     @Override
     public void fileReceiving(MessageBean messageBean) {
         EventBus.getDefault().post(messageBean);
+        FileBean fileBean = messageBean.getFileBean();
+        messageBean.transformMessageEntity(messageBean.getUserIp())
+                .saveOrUpdate("targetIp = ? and filePath = ?",messageBean.getUserIp(),fileBean.getFilePath());
     }
 
     @Override
@@ -212,15 +220,14 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
         mTvTipNonePeer.setVisibility(View.GONE);
         if (mPeerListRvAdapter.isContained(peerBean.getUserIp())){
             mPeerListRvAdapter.updateItem(peerBean);
-            EventBus.getDefault().post(new LinkSocketResponseEvent(true,peerBean));
         }else {
             mPeerListRvAdapter.addItem(peerBean);
         }
+        EventBus.getDefault().post(new LinkSocketResponseEvent(true,peerBean));
     }
 
     @Override
     public void removePeer(String ip) {
-        Log.d(TAG, "removePeer: "+ip);
         mPeerListRvAdapter.removeItem(ip);
         if (mPeerListRvAdapter.getDataList().size() == 0){
             mRvPeerList.setVisibility(View.GONE);

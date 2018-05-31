@@ -24,7 +24,7 @@ public interface ChatDetailContract {
     interface Presenter{
         void linkSocket();
         void setLinkSocketState(boolean state);
-        void sendMsg(MessageBean msg,String targetIp,int position);
+        void sendMsg(MessageBean msg,int position);
         void sendMsgSuccess(int position);
         void sendMsgError(int position,String error);
         void fileSending(int position, FileBean fileBean);//更新文件发送进度

@@ -1,16 +1,23 @@
 package com.rdc.p2p.bean;
 
+import org.litepal.crud.DataSupport;
+
 /**
  * Created by Lin Yaotian on 2018/5/27.
  */
-public class FileBean {
+public class FileBean implements Cloneable{
     private String filePath;
     private String fileName;
     private int fileSize;
     private int states;//传输状态
     private int transmittedSize;//已经传输的字节
 
-    public FileBean copy(int states,int transmittedSize){
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
+
+    public FileBean copy(int states, int transmittedSize){
         FileBean fileBean = new FileBean();
         fileBean.setStates(states);
         fileBean.setTransmittedSize(transmittedSize);

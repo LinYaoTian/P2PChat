@@ -137,22 +137,21 @@ public class SocketThread extends Thread {
                     break;
                 case Protocol.FILE:
                     mIsFileReceived.set(false);
-                    FileInputStream fileInputStream = new FileInputStream(messageBean.getFileBean().getFilePath());
-                    int fileSize = fileInputStream.available();
+                    FileBean fileBean = messageBean.getFileBean();
+                    FileInputStream fileInputStream = new FileInputStream(fileBean.getFilePath());
+                    int fileSize = fileBean.getFileSize();
                     dos.writeInt(fileSize);
-                    dos.writeUTF(messageBean.getFileBean().getFileName());
+                    dos.writeUTF(fileBean.getFileName());
                     byte[] fileBytes = new byte[fileSize];
-                    Log.d(TAG, "sendMsg: File start");
                     fileInputStream.read(fileBytes);
                     int offset = 0;//每次写入长度
                     int count = 0;//次数
                     int denominator;//将总文件分为多少份传输
-                    if (fileSize < 1024*20){
+                    if (fileSize < (1024*300)){
                         denominator = 1;
                     }else {
-                        denominator = fileSize / 1024*50;
+                        denominator = fileSize / (1024*300);
                     }
-                    FileBean fileBean = messageBean.getFileBean();
                     fileBean.setStates(Constant.SEND_FILE_ING);
                     while (true){
                         count++;
@@ -327,16 +326,18 @@ public class SocketThread extends Thread {
                                 if (transLen == fileSize || read == -1){
                                     fos.flush();
                                     fos.close();
-                                    FileBean fileBean1 = fileBean.copy(Constant.RECEIVE_FILE_FINISH,transLen);
-                                    fileMsg.setFileBean(fileBean1);
+                                    fileMsg = fileMsg.clone();
+                                    fileMsg.getFileBean().setTransmittedSize(transLen);
+                                    fileMsg.getFileBean().setStates(Constant.RECEIVE_FILE_FINISH);
                                     mPresenter.fileReceiving(fileMsg);
                                     sendRequest(App.getUserBean(),Protocol.FILE_RECEIVED);
                                     break;
                                 }
                                 if (countBytes >= 1024*100){
                                     //每接收到100KB数据就更新一次界面
-                                    FileBean fileBean1 = fileBean.copy(Constant.RECEIVE_FILE_ING,transLen);
-                                    fileMsg.setFileBean(fileBean1);
+                                    fileMsg = fileMsg.clone();
+                                    fileMsg.getFileBean().setTransmittedSize(transLen);
+                                    fileMsg.getFileBean().setStates(Constant.RECEIVE_FILE_ING);
                                     mPresenter.fileReceiving(fileMsg);
                                     countBytes = 0;
                                 }

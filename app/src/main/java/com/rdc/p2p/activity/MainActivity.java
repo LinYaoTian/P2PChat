@@ -203,7 +203,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 //            mSocket.receive(packet);
 //            String content = new String(buf,0,packet.getLength());
 //            Log.d(TAG, "receiveBroadcast: "+content);
-//            Message message = new Message();
+//            MessageEntity message = new MessageEntity();
 //            message.what = 0;
 //            message.obj = content;
 //            mHandler.sendMessage(message);

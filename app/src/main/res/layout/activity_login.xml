@@ -5,7 +5,9 @@
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:playSound="http://schemas.android.com/apk/res-auto"
-    android:background="@color/colorPrimary">
+    android:background="@color/colorPrimary"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
 
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/civ_user_image_act_login"

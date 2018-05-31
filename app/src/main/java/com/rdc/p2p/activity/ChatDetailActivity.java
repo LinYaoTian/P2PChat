@@ -43,6 +43,7 @@ import com.rdc.p2p.R;
 import com.rdc.p2p.adapter.MsgRvAdapter;
 import com.rdc.p2p.base.BaseActivity;
 import com.rdc.p2p.bean.FileBean;
+import com.rdc.p2p.bean.MessageEntity;
 import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.event.LinkSocketRequestEvent;
 import com.rdc.p2p.bean.MessageBean;
@@ -61,6 +62,7 @@ import com.rdc.p2p.widget.PlayerSoundView;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
+import org.litepal.crud.DataSupport;
 
 import java.io.File;
 import java.io.IOException;
@@ -113,6 +115,7 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     private ImageView mIvMicrophone;
     private TextView mTvRecordTime;
     private PopupWindow mPwMicrophone;
+    private boolean isSendingFile;//是否正在发送文件
     private PlayerSoundView mPsvIsPlaying = null;//正在播放音频的view
     private Handler mHandler = new Handler(new Handler.Callback() {
         @Override
@@ -188,7 +191,7 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
 
     @Override
     public ChatDetailPresenter getInstance() {
-        return new ChatDetailPresenter(this);
+        return new ChatDetailPresenter(this,mTargetPeerIp);
     }
 
     @Override
@@ -200,6 +203,7 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     protected void initData() {
         mAudioRecorderUtil = new AudioRecorderUtil();
         mMediaPlayerUtil = MediaPlayerUtil.getInstance();
+        isSendingFile = false;
     }
 
     @Override
@@ -211,6 +215,13 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
         mRvMsgList.setLayoutManager(mLLManager);
         mRvMsgList.setAdapter(mMsgRvAdapter);
         mRvMsgList.getItemAnimator().setChangeDuration(0);
+        List<MessageEntity> list = DataSupport.where("targetIp = ?",mTargetPeerIp).find(MessageEntity.class);
+        List<MessageBean> list1 = new ArrayList<>();
+        for (MessageEntity messageEntity : list) {
+            list1.add(messageEntity.transformMessageBean());
+        }
+        mMsgRvAdapter.appendData(list1);
+        mHandler.sendEmptyMessage(SCROLL_NOW);
         View view = View.inflate(this, R.layout.popupwindow_micorphone, null);
         mPwMicrophone = new PopupWindow(this);
         mPwMicrophone.setBackgroundDrawable(new ColorDrawable(0x00000000));
@@ -287,7 +298,10 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
 
             @Override
             public void onAlterClick(int position) {
-                linkSocket();
+                MessageBean messageBean = mMsgRvAdapter.getDataList().get(position);
+                messageBean.setSendStatus(Constant.SEND_MSG_ING);
+                mMsgRvAdapter.notifyItemChanged(position,Constant.UPDATE_SEND_MSG_STATE);
+                presenter.sendMsg(messageBean,position);
             }
 
             @Override
@@ -311,14 +325,14 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
             @Override
             public void onClick(View view) {
                 if (!TextUtils.isEmpty(getString(mEtInput))) {
-                    MessageBean messageMean = new MessageBean();
-                    messageMean.setMine(true);
-                    messageMean.setMsgType(Protocol.TEXT);
-                    messageMean.setText(getString(mEtInput));
-                    messageMean.setSendStatus(Constant.SEND_MSG_ING);
-                    mMsgRvAdapter.appendData(messageMean);
+                    MessageBean messageBean = new MessageBean();
+                    messageBean.setMine(true);
+                    messageBean.setMsgType(Protocol.TEXT);
+                    messageBean.setText(getString(mEtInput));
+                    messageBean.setSendStatus(Constant.SEND_MSG_ING);
+                    mMsgRvAdapter.appendData(messageBean);
                     mHandler.sendEmptyMessage(SCROLL_NOW);
-                    presenter.sendMsg(messageMean, mTargetPeerIp,mMsgRvAdapter.getItemCount()-1);
+                    presenter.sendMsg(messageBean,mMsgRvAdapter.getItemCount()-1);
                     mEtInput.setText("");
                 }
             }
@@ -400,7 +414,7 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                 messageMean.setSendStatus(Constant.SEND_MSG_ING);
                 mMsgRvAdapter.appendData(messageMean);
                 mHandler.sendEmptyMessage(SCROLL_NOW);
-                presenter.sendMsg(messageMean, mTargetPeerIp,mMsgRvAdapter.getItemCount()-1);
+                presenter.sendMsg(messageMean,mMsgRvAdapter.getItemCount()-1);
             }
         });
         mTvPressedStartRecord.setOnTouchListener(new View.OnTouchListener() {
@@ -467,7 +481,7 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     messageMean.setSendStatus(Constant.SEND_MSG_ING);
                     mMsgRvAdapter.appendData(messageMean);
                     mHandler.sendEmptyMessage(SCROLL_NOW);
-                    presenter.sendMsg(messageMean, mTargetPeerIp,mMsgRvAdapter.getItemCount()-1);
+                    presenter.sendMsg(messageMean,mMsgRvAdapter.getItemCount()-1);
                 }
                 break;
             case TAKE_PHOTO:
@@ -479,13 +493,14 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     messageMean.setSendStatus(Constant.SEND_MSG_ING);
                     mMsgRvAdapter.appendData(messageMean);
                     mHandler.sendEmptyMessage(SCROLL_NOW);
-                    presenter.sendMsg(messageMean, mTargetPeerIp,mMsgRvAdapter.getItemCount()-1);
+                    presenter.sendMsg(messageMean,mMsgRvAdapter.getItemCount()-1);
                 } else {
                     showToast("获取拍照后的相片路径失败！");
                 }
                 break;
             case FILE_MANAGER:
                 if (resultCode == RESULT_OK) {
+                    isSendingFile = true;
                     MessageBean fileMsg = new MessageBean();
                     fileMsg.setMine(true);
                     fileMsg.setMsgType(Protocol.FILE);
@@ -498,7 +513,7 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     fileMsg.setFileBean(fileBean);
                     mMsgRvAdapter.appendData(fileMsg);
                     mHandler.sendEmptyMessage(SCROLL_NOW);
-                    presenter.sendMsg(fileMsg, mTargetPeerIp,mMsgRvAdapter.getItemCount()-1);
+                    presenter.sendMsg(fileMsg,mMsgRvAdapter.getItemCount()-1);
                 } else {
                     showToast("从文件管理器获取文件失败！");
                 }
@@ -528,7 +543,6 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                 mTakePhotoFile.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
-                Log.d(TAG, "openCamera: 创建File失败！");
             }
         }
         if (Build.VERSION.SDK_INT >= 24) {
@@ -550,22 +564,29 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     @Override
     public void sendMsgSuccess(int position) {
         //设置状态
-        mMsgRvAdapter.getDataList().get(position).setSendStatus(Constant.SEND_MSG_FINISH);
+        MessageBean messageBean = mMsgRvAdapter.getDataList().get(position);
+        messageBean.setSendStatus(Constant.SEND_MSG_FINISH);
         mMsgRvAdapter.notifyItemChanged(position,Constant.UPDATE_SEND_MSG_STATE);
+        messageBean.transformMessageEntity(mTargetPeerIp).save();
     }
 
     @Override
     public void sendMsgError(int position, String error) {
         //设置状态
-        mMsgRvAdapter.getDataList().get(position).setSendStatus(Constant.SEND_MSG_ERROR);
+        MessageBean messageBean = mMsgRvAdapter.getDataList().get(position);
+        messageBean.setSendStatus(Constant.SEND_MSG_ERROR);
         mMsgRvAdapter.notifyItemChanged(position,Constant.UPDATE_SEND_MSG_STATE);
+        messageBean.transformMessageEntity(mTargetPeerIp).save();
         showToast(error);
+
     }
 
     @Override
     public void fileSending(int position, FileBean fileBean) {
-        mMsgRvAdapter.getDataList().get(position).setFileBean(fileBean);
+        MessageBean messageBean = mMsgRvAdapter.getDataList().get(position);
+        messageBean.setFileBean(fileBean);
         mMsgRvAdapter.notifyItemChanged(position,Constant.UPDATE_FILE_STATE);
+        messageBean.transformMessageEntity(mTargetPeerIp).saveOrUpdate("targetIp = ? and filePath = ?",mTargetPeerIp,fileBean.getFilePath());
     }
 
     @Override
@@ -621,7 +642,6 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void receiveMessage(MessageBean messageBean) {
         if (messageBean.getUserIp().equals(mTargetPeerIp)) {
-            Log.d(TAG, "receiveMessage: "+messageBean.toString());
             if (messageBean.getMsgType() == Protocol.FILE){
                 FileBean fileBean = messageBean.getFileBean();
                 if (fileBean.getStates() == Constant.RECEIVE_FILE_START){
