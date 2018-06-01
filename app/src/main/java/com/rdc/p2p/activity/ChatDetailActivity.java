@@ -137,6 +137,7 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     if (mMsgRvAdapter.getItemCount() - 1 > 0) {
                         mRvMsgList.smoothScrollToPosition(mMsgRvAdapter.getItemCount() - 1);
                     }
+                    break;
                 case HIDE_SOFT_INPUT:
                     hideKeyboard();
                     break;

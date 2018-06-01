@@ -148,9 +148,14 @@ public class PeerListPresenter extends BasePresenter<PeerListContract.View> impl
     }
 
     @Override
-    public void fileReceiving(MessageBean messageBean) {
+    public void fileReceiving(final MessageBean messageBean) {
         if (isAttachView()){
-            getMvpView().fileReceiving(messageBean);
+            mActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    getMvpView().fileReceiving(messageBean);
+                }
+            });
         }
     }
 
