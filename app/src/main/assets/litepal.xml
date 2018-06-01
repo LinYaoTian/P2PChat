@@ -32,7 +32,7 @@
     	</list>
     -->
     <list>
-        <mapping class="com.rdc.p2p.bean.MessageEntity"/>
+        <mapping class="com.rdc.p2p.bean.MessageBean"/>
     </list>
 
     <!--

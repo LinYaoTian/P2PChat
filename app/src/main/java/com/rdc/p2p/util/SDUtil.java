@@ -383,19 +383,30 @@ public class SDUtil {
     /**
      * 检查是否在列表上已经存在该文件，若是，则修改文件名，直到不重名为止
      * @param fileNameList 在列表上的文件名集合
-     * @param uri 文件Uri
      * @return
      */
-    public static String checkFileName(@NonNull List<String> fileNameList, Uri uri){
-        String filePath = getFilePathByUri(App.getContxet(),uri);
+    public static String checkFileName(@NonNull List<String> fileNameList, String filePath){
+        String fileName = getFileName(filePath);
+        //获取后缀名前的分隔符"."在fName中的位置。
+        int dotIndex = fileName.lastIndexOf(".");
+        String type;
+        String name;
+        if (dotIndex > 0) {
+            //获取文件的后缀名
+            type = fileName.substring(dotIndex, fileName.length());
+            name = fileName.substring(0,dotIndex);
+        }else {
+            name = fileName;
+            type = "";
+        }
         while (true){
-            if (fileNameList.contains(getFileName(filePath))){
-                filePath = renameFile(filePath);
+            if (fileNameList.contains(fileName)){
+                fileName = name + "*" +type;
             }else {
                 break;
             }
         }
-        return filePath;
+        return fileName;
     }
 
 

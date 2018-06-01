@@ -39,24 +39,24 @@ import java.util.List;
 
 import butterknife.BindView;
 
-public class MainActivity extends BaseActivity implements View.OnClickListener {
+public class MainActivity extends BaseActivity {
 
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
-    @BindView(R.id.dl_drawer_act_main)
-    DrawerLayout mDrawerLayout;
-    @BindView(R.id.ll_bottom_left_layout_act_main)
-    LinearLayout mLlBottomLeft;
-    @BindView(R.id.iv_chat_act_main)
-    ImageView mIvChat;
-    @BindView(R.id.iv_peer_list_act_main)
-    ImageView mIvPeerList;
-    @BindView(R.id.tv_chat_act_main)
-    TextView mTvChat;
-    @BindView(R.id.tv_peer_list_act_main)
-    TextView mTvPeerList;
-    @BindView(R.id.ll_bottom_right_layout_act_main)
-    LinearLayout mLlBottomRight;
+//    @BindView(R.id.dl_drawer_act_main)
+//    DrawerLayout mDrawerLayout;
+//    @BindView(R.id.ll_bottom_left_layout_act_main)
+//    LinearLayout mLlBottomLeft;
+//    @BindView(R.id.iv_chat_act_main)
+//    ImageView mIvChat;
+//    @BindView(R.id.iv_peer_list_act_main)
+//    ImageView mIvPeerList;
+//    @BindView(R.id.tv_chat_act_main)
+//    TextView mTvChat;
+//    @BindView(R.id.tv_peer_list_act_main)
+//    TextView mTvPeerList;
+//    @BindView(R.id.ll_bottom_right_layout_act_main)
+//    LinearLayout mLlBottomRight;
     @BindView(R.id.vp_act_main)
     ViewPager mVpContent;
 
@@ -102,10 +102,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     @Override
     protected void initView() {
         initToolbar();
-        ActionBarDrawerToggle mDrawerToggle =
-                new ActionBarDrawerToggle(this, mDrawerLayout, mToolbar, R.string.open, R.string.close);
-        mDrawerToggle.syncState();
-        mDrawerLayout.addDrawerListener(mDrawerToggle);
+//        ActionBarDrawerToggle mDrawerToggle =
+//                new ActionBarDrawerToggle(this, mDrawerLayout, mToolbar, R.string.open, R.string.close);
+//        mDrawerToggle.syncState();
+//        mDrawerLayout.addDrawerListener(mDrawerToggle);
         mPeerListFragment = new PeerListFragment();
         mVpContent.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
             @Override
@@ -128,7 +128,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         setSupportActionBar(mToolbar);
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
+            actionBar.setDisplayHomeAsUpEnabled(false);
             actionBar.setDisplayShowTitleEnabled(false);
         }
         mToolbar.setTitle("");
@@ -152,37 +152,37 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                     showToast("ServerSocket未连接，请检查WIFI！");
                 }
                 break;
-            case android.R.id.home:
-                mDrawerLayout.openDrawer(GravityCompat.START);
-                break;
+//            case android.R.id.home:
+//                mDrawerLayout.openDrawer(GravityCompat.START);
+//                break;
         }
         return true;
     }
 
     @Override
     protected void initListener() {
-        mLlBottomLeft.setOnClickListener(this);
-        mLlBottomRight.setOnClickListener(this);
+//        mLlBottomLeft.setOnClickListener(this);
+//        mLlBottomRight.setOnClickListener(this);
     }
 
-    @Override
-    public void onClick(View view) {
-        switch (view.getId()){
-            case R.id.ll_bottom_right_layout_act_main:
-                mIvChat.setImageResource(R.drawable.iv_chat_pressed);
-                mTvChat.setTextColor(getResources().getColor(R.color.colorPrimary));
-                mIvPeerList.setImageResource(R.drawable.iv_peer_list_normal);
-                mTvPeerList.setTextColor(getResources().getColor(R.color.grey_text_or_bg));
-                break;
-            case R.id.ll_bottom_left_layout_act_main:
-                mIvChat.setImageResource(R.drawable.iv_chat_normal);
-                mTvChat.setTextColor(getResources().getColor(R.color.grey_text_or_bg));
-                mIvPeerList.setImageResource(R.drawable.iv_peer_list_pressed);
-                mTvPeerList.setTextColor(getResources().getColor(R.color.colorPrimary));
-                Log.d(TAG, "SocketManager:"+ SocketManager.getInstance().toString());
-                break;
-        }
-    }
+//    @Override
+//    public void onClick(View view) {
+//        switch (view.getId()){
+//            case R.id.ll_bottom_right_layout_act_main:
+//                mIvChat.setImageResource(R.drawable.iv_chat_pressed);
+//                mTvChat.setTextColor(getResources().getColor(R.color.colorPrimary));
+//                mIvPeerList.setImageResource(R.drawable.iv_peer_list_normal);
+//                mTvPeerList.setTextColor(getResources().getColor(R.color.grey_text_or_bg));
+//                break;
+//            case R.id.ll_bottom_left_layout_act_main:
+//                mIvChat.setImageResource(R.drawable.iv_chat_normal);
+//                mTvChat.setTextColor(getResources().getColor(R.color.grey_text_or_bg));
+//                mIvPeerList.setImageResource(R.drawable.iv_peer_list_pressed);
+//                mTvPeerList.setTextColor(getResources().getColor(R.color.colorPrimary));
+//                Log.d(TAG, "SocketManager:"+ SocketManager.getInstance().toString());
+//                break;
+//        }
+//    }
 
 
 //    private void initServerSocket() {

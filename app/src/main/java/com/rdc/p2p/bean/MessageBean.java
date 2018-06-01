@@ -2,73 +2,121 @@ package com.rdc.p2p.bean;
 
 import android.annotation.SuppressLint;
 
+import org.litepal.crud.DataSupport;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
  * Created by Lin Yaotian on 2018/5/16.
  */
-public class MessageBean implements Cloneable {
-
+public class MessageBean extends DataSupport implements Cloneable {
     private String userIp;//消息发送方IP
+    private String belongIp; //数据库存储标识，区分消息归属方(例如 我和A聊天，则我本地存储的我和A之间相互发送的 MessageBean 的 belongIp 都是 A 的IP)
     private String text;
     private String time;
     private String imagePath;
     private String audioPath;
-    private FileBean fileBean;
+    private String filePath;
+    private String fileName;
+    private int fileSize;
+    private int fileState;//传输状态
+    private int transmittedSize;//已经传输的字节
     private int msgType;//消息类型 音频/图片/文字/文件
     private boolean isMine;//是否是本人发的消息
     private int sendStatus;//若为本人发的音频/图片/文字消息，发送状态有 SEND_FILE_ING ,SEND_FINISH,SEND_ERROR
+
+
+
+    public MessageBean(String belongIp){
+        this.belongIp = belongIp;
+    }
 
     @Override
     public MessageBean clone() {
         MessageBean messageBean = null;
         try {
             messageBean = (MessageBean) super.clone();
-            messageBean.fileBean = (FileBean) fileBean.clone();
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();
         }
         return messageBean;
     }
 
+    public void updateFileState(MessageBean messageBean){
+        this.transmittedSize = messageBean.getTransmittedSize();
+        this.fileState = messageBean.getFileState();
+        this.filePath = messageBean.getFilePath();
+        this.fileName = messageBean.getFileName();
+        this.fileSize = messageBean.getFileSize();
+    }
+
     @Override
     public String toString() {
         return "MessageBean{" +
                 "userIp='" + userIp + '\'' +
+                ", belongIp='" + belongIp + '\'' +
                 ", text='" + text + '\'' +
                 ", time='" + time + '\'' +
                 ", imagePath='" + imagePath + '\'' +
                 ", audioPath='" + audioPath + '\'' +
-                ", fileBean=" + fileBean +
+                ", filePath='" + filePath + '\'' +
+                ", fileName='" + fileName + '\'' +
+                ", fileSize=" + fileSize +
+                ", fileState=" + fileState +
+                ", transmittedSize=" + transmittedSize +
                 ", msgType=" + msgType +
                 ", isMine=" + isMine +
+                ", sendStatus=" + sendStatus +
                 '}';
     }
 
-    /**
-     * @param targetIp 相对于本用户来说的聊天对象IP
-     * @return
-     */
-    public MessageEntity transformMessageEntity(String targetIp){
-        MessageEntity messageEntity = new MessageEntity();
-        messageEntity.setUserIp(userIp);
-        messageEntity.setTargetIp(targetIp);
-        messageEntity.setText(text);
-        messageEntity.setTime(time);
-        messageEntity.setImagePath(imagePath);
-        messageEntity.setAudioPath(audioPath);
-        messageEntity.setMsgType(msgType);
-        messageEntity.setMine(isMine);
-        messageEntity.setSendStatus(sendStatus);
-        if (fileBean != null){
-            messageEntity.setFilePath(fileBean.getFilePath());
-            messageEntity.setFileName(fileBean.getFileName());
-            messageEntity.setFileSize(fileBean.getFileSize());
-            messageEntity.setStates(fileBean.getStates());
-            messageEntity.setTransmittedSize(fileBean.getTransmittedSize());
-        }
-        return messageEntity;
+    public String getBelongIp() {
+        return belongIp == null ? "" : belongIp;
+    }
+
+    public void setBelongIp(String belongIp) {
+        this.belongIp = belongIp == null ? "" : belongIp;
+    }
+
+    public String getFilePath() {
+        return filePath == null ? "" : filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath == null ? "" : filePath;
+    }
+
+    public String getFileName() {
+        return fileName == null ? "" : fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName == null ? "" : fileName;
+    }
+
+    public int getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(int fileSize) {
+        this.fileSize = fileSize;
+    }
+
+    public int getFileState() {
+        return fileState;
+    }
+
+    public void setFileState(int fileState) {
+        this.fileState = fileState;
+    }
+
+    public int getTransmittedSize() {
+        return transmittedSize;
+    }
+
+    public void setTransmittedSize(int transmittedSize) {
+        this.transmittedSize = transmittedSize;
     }
 
     public int getSendStatus() {
@@ -77,14 +125,6 @@ public class MessageBean implements Cloneable {
 
     public void setSendStatus(int sendStatus) {
         this.sendStatus = sendStatus;
-    }
-
-    public FileBean getFileBean() {
-        return fileBean;
-    }
-
-    public void setFileBean(FileBean fileBean) {
-        this.fileBean = fileBean;
     }
 
     public String getUserIp() {
@@ -106,10 +146,10 @@ public class MessageBean implements Cloneable {
     public String getText() {
         if (text == null || text.equals("")){
             if (audioPath != null){
-                return "音频";
+                return "语音";
             }else if (imagePath != null){
                 return "图片";
-            }else if (fileBean != null){
+            }else if (filePath != null){
                 return "文件";
             }
         }

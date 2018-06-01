@@ -16,9 +16,9 @@ import com.bumptech.glide.Glide;
 import com.rdc.p2p.R;
 import com.rdc.p2p.app.App;
 import com.rdc.p2p.base.BaseRecyclerViewAdapter;
-import com.rdc.p2p.bean.FileBean;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.config.Constant;
+import com.rdc.p2p.config.FileState;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.listener.OnItemViewClickListener;
 import com.rdc.p2p.util.ImageUtil;
@@ -61,7 +61,7 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
     public void appendData(MessageBean messageBean) {
         super.appendData(messageBean);
         if (messageBean.getMsgType() == Protocol.FILE){
-            mFileNameList.add(messageBean.getFileBean().getFileName());
+            mFileNameList.add(messageBean.getFileName());
         }
     }
 
@@ -70,7 +70,7 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
         super.appendData(dataList);
         for (MessageBean messageBean : dataList) {
             if (messageBean.getMsgType() == Protocol.FILE){
-                mFileNameList.add(messageBean.getFileBean().getFileName());
+                mFileNameList.add(messageBean.getFileName());
             }
         }
     }
@@ -86,11 +86,8 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
      */
     public int getPositionByFileName(String fileName){
         for (int i = 0; i < mDataList.size(); i++) {
-            if (mDataList.get(i).getFileBean() != null){
-                FileBean dataBean = mDataList.get(i).getFileBean();
-                if (dataBean.getFileName().equals(fileName)){
-                    return i;
-                }
+            if (fileName.equals(mDataList.get(i).getFileName())){
+                return i;
             }
         }
         return -1;
@@ -191,10 +188,10 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
                 case Constant.UPDATE_FILE_STATE:
                     if (holder instanceof LeftFileHolder){
                         LeftFileHolder leftFileHolder = (LeftFileHolder) holder;
-                        updateTransmitFileState(leftFileHolder.mPbReceive,leftFileHolder.mTvReceiveStates,messageBean.getFileBean());
+                        updateTransmitFileState(leftFileHolder.mPbReceive,leftFileHolder.mTvReceiveStates,messageBean);
                     }else if (holder instanceof RightFileHolder){
                         RightFileHolder rightFileHolder = (RightFileHolder) holder;
-                        updateTransmitFileState(rightFileHolder.mPbSending,rightFileHolder.mTvSendStatus,messageBean.getFileBean());
+                        updateTransmitFileState(rightFileHolder.mPbSending,rightFileHolder.mTvSendStatus,messageBean);
                     }
                     break;
                 case Constant.UPDATE_SEND_MSG_STATE:
@@ -462,9 +459,8 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
             Glide.with(itemView.getContext())
                     .load(ImageUtil.getImageResId(mTargetPeerImageId))
                     .into(mCivLeftHeadImage);
-            FileBean fileBean = bean.getFileBean();
-            mTvFileName.setText(fileBean.getFileName());
-            mTvFileSize.setText(SDUtil.bytesTransform(fileBean.getFileSize()));
+            mTvFileName.setText(bean.getFileName());
+            mTvFileSize.setText(SDUtil.bytesTransform(bean.getFileSize()));
             mPbReceive.setVisibility(View.VISIBLE);
             if (mOnItemViewClickListener != null){
                 mClFileLayout.setOnClickListener(new View.OnClickListener() {
@@ -474,17 +470,17 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
                     }
                 });
             }
-            switch (fileBean.getStates()){
-                case Constant.RECEIVE_FILE_ING:
-                    float ratio = fileBean.getTransmittedSize()*1f/fileBean.getFileSize();
+            switch (bean.getFileState()){
+                case FileState.RECEIVE_FILE_ING:
+                    float ratio = bean.getTransmittedSize()*1f/bean.getFileSize();
                     mPbReceive.setProgress((int) (ratio*100));
                     mTvReceiveStates.setText(ratio*100+"%");
                     break;
-                case Constant.RECEIVE_FILE_FINISH:
+                case FileState.RECEIVE_FILE_FINISH:
                     mPbReceive.setVisibility(View.INVISIBLE);
                     mTvReceiveStates.setText("已下载");
                     break;
-                case Constant.RECEIVE_FILE_ERROR:
+                case FileState.RECEIVE_FILE_ERROR:
                     mPbReceive.setVisibility(View.INVISIBLE);
                     mTvReceiveStates.setText("传输出错");
                     break;
@@ -517,9 +513,8 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
             Glide.with(itemView.getContext())
                     .load(ImageUtil.getImageResId(App.getUserBean().getUserImageId()))
                     .into(mCivRightHeadImage);
-            FileBean fileBean = bean.getFileBean();
-            mTvFileName.setText(fileBean.getFileName());
-            mTvFileSize.setText(SDUtil.bytesTransform(fileBean.getFileSize()));
+            mTvFileName.setText(bean.getFileName());
+            mTvFileSize.setText(SDUtil.bytesTransform(bean.getFileSize()));
             mPbSending.setVisibility(View.VISIBLE);
             if (mOnItemViewClickListener != null){
                 mClFileLayout.setOnClickListener(new View.OnClickListener() {
@@ -529,17 +524,17 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
                     }
                 });
             }
-            switch (fileBean.getStates()){
-                case Constant.SEND_FILE_ING:
-                    float ratio = fileBean.getTransmittedSize()*1f/fileBean.getFileSize();
+            switch (bean.getFileState()){
+                case FileState.SEND_FILE_ING:
+                    float ratio = bean.getTransmittedSize()*1f/bean.getFileSize();
                     mPbSending.setProgress((int) (ratio*100));
                     mTvSendStatus.setText(ratio*100+"%");
                     break;
-                case Constant.SEND_FILE_FINISH:
+                case FileState.SEND_FILE_FINISH:
                     mPbSending.setVisibility(View.INVISIBLE);
                     mTvSendStatus.setText("已发送");
                     break;
-                case Constant.SEND_FILE_ERROR:
+                case FileState.SEND_FILE_ERROR:
                     mPbSending.setVisibility(View.INVISIBLE);
                     mTvSendStatus.setText("传输出错");
                     break;
@@ -596,24 +591,24 @@ public class MsgRvAdapter extends BaseRecyclerViewAdapter<MessageBean> {
      * 更新文件传输状态
      * @param progressBar
      * @param textView
-     * @param fileBean
+     * @param messageBean
      */
     @SuppressLint("SetTextI18n")
-    private void updateTransmitFileState(ProgressBar progressBar, TextView textView, FileBean fileBean){
-        switch (fileBean.getStates()){
-            case Constant.RECEIVE_FILE_ING:
-            case Constant.SEND_FILE_ING:
-                float ratio2 = fileBean.getTransmittedSize()*1f/fileBean.getFileSize();
+    private void updateTransmitFileState(ProgressBar progressBar, TextView textView, MessageBean messageBean){
+        switch (messageBean.getFileState()){
+            case FileState.RECEIVE_FILE_ING:
+            case FileState.SEND_FILE_ING:
+                float ratio2 = messageBean.getTransmittedSize()*1f/messageBean.getFileSize();
                 progressBar.setProgress((int) (ratio2*100));
                 textView.setText((int)( ratio2*100)+"%");
                 break;
-            case Constant.SEND_FILE_FINISH:
-            case Constant.RECEIVE_FILE_FINISH:
+            case FileState.SEND_FILE_FINISH:
+            case FileState.RECEIVE_FILE_FINISH:
                 progressBar.setVisibility(View.INVISIBLE);
                 textView.setText("完成");
                 break;
-            case Constant.SEND_FILE_ERROR:
-            case Constant.RECEIVE_FILE_ERROR:
+            case FileState.SEND_FILE_ERROR:
+            case FileState.RECEIVE_FILE_ERROR:
                 progressBar.setVisibility(View.INVISIBLE);
                 textView.setText("失败");
                 break;

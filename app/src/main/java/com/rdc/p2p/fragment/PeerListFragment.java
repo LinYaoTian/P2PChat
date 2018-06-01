@@ -23,14 +23,13 @@ import com.rdc.p2p.R;
 import com.rdc.p2p.activity.ChatDetailActivity;
 import com.rdc.p2p.adapter.PeerListRvAdapter;
 import com.rdc.p2p.base.BaseFragment;
-import com.rdc.p2p.bean.FileBean;
-import com.rdc.p2p.bean.MessageEntity;
-import com.rdc.p2p.config.Constant;
+import com.rdc.p2p.config.FileState;
 import com.rdc.p2p.event.LinkSocketRequestEvent;
 import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.PeerBean;
 import com.rdc.p2p.contract.PeerListContract;
 import com.rdc.p2p.event.LinkSocketResponseEvent;
+import com.rdc.p2p.event.RecentMsgEvent;
 import com.rdc.p2p.listener.OnClickRecyclerViewListener;
 import com.rdc.p2p.manager.SocketManager;
 import com.rdc.p2p.presenter.PeerListPresenter;
@@ -38,7 +37,6 @@ import com.rdc.p2p.presenter.PeerListPresenter;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
-import org.litepal.crud.DataSupport;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,7 +79,6 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     public void onSaveInstanceState(@NonNull Bundle outState) {
 
     }
-
     @Override
     protected int setLayoutResourceId() {
         return R.layout.fragment_peer_list;
@@ -135,6 +132,11 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void linkSocket(LinkSocketRequestEvent linkSocketRequestEvent){
         mPresenter.linkPeer(linkSocketRequestEvent.getTargetIp());
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void updateRecentMsg(RecentMsgEvent recentMsgEvent){
+       mPeerListRvAdapter.updateItemText(recentMsgEvent.getText(),recentMsgEvent.getTargetIp());
     }
 
     public boolean isServerSocketConnected(){
@@ -199,17 +201,16 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
         if (peer == null){
             showToast("收到成员列表以外的消息！");
         }else {
-            messageBean.transformMessageEntity(peer.getUserIp()).save();
             EventBus.getDefault().post(messageBean);
         }
     }
 
     @Override
     public void fileReceiving(MessageBean messageBean) {
+        if (messageBean.getFileState() == FileState.RECEIVE_FILE_START){
+            mPeerListRvAdapter.updateItemText(messageBean.getText(),messageBean.getUserIp());
+        }
         EventBus.getDefault().post(messageBean);
-        FileBean fileBean = messageBean.getFileBean();
-        messageBean.transformMessageEntity(messageBean.getUserIp())
-                .saveOrUpdate("targetIp = ? and filePath = ?",messageBean.getUserIp(),fileBean.getFilePath());
     }
 
     @Override

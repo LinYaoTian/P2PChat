@@ -16,7 +16,7 @@ import android.widget.EditText;
 
 import com.bumptech.glide.Glide;
 import com.rdc.p2p.app.App;
-import com.rdc.p2p.bean.MessageEntity;
+import com.rdc.p2p.bean.MessageBean;
 import com.rdc.p2p.bean.UserBean;
 import com.rdc.p2p.fragment.ScanDeviceFragment;
 import com.rdc.p2p.fragment.SelectImageFragment;
@@ -64,7 +64,7 @@ public class LoginActivity extends BaseActivity {
         super.onCreate(savedInstanceState);
         getPermission(this);
         LitePal.getDatabase();
-        DataSupport.deleteAll(MessageEntity.class);
+        DataSupport.deleteAll(MessageBean.class);
     }
 
     /**

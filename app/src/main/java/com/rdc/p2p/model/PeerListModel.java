@@ -84,7 +84,6 @@ public class PeerListModel implements PeerListContract.Model {
                             socketManager.addSocketThread(ip,socketThread);
                             mExecutor.execute(socketThread);
                         }
-
                     } catch (IOException e) {
                         e.printStackTrace();
                         Log.d(TAG, "mServerSocket.accept() error !");

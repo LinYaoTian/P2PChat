@@ -1,12 +1,9 @@
 package com.rdc.p2p.presenter;
 
 import android.app.Activity;
-import android.util.Log;
 
 import com.rdc.p2p.base.BasePresenter;
-import com.rdc.p2p.bean.FileBean;
 import com.rdc.p2p.bean.MessageBean;
-import com.rdc.p2p.config.Constant;
 import com.rdc.p2p.config.Protocol;
 import com.rdc.p2p.contract.ChatDetailContract;
 import com.rdc.p2p.model.ChatDetailModel;
@@ -20,12 +17,10 @@ public class ChatDetailPresenter extends BasePresenter<ChatDetailContract.View> 
 
     private ChatDetailContract.Model mModel;
     private Activity mActivity;
-    private String mTargetIp;
 
     public ChatDetailPresenter(Activity activity,String targetIp){
-        mModel = new ChatDetailModel(this);
+        mModel = new ChatDetailModel(this,targetIp);
         mActivity = activity;
-        mTargetIp = targetIp;
     }
 
     @Override
@@ -47,25 +42,22 @@ public class ChatDetailPresenter extends BasePresenter<ChatDetailContract.View> 
 
     @Override
     public void sendMsg(final MessageBean msg, final int position) {
-            if (msg.getMsgType() == Protocol.IMAGE){
-                //压缩图片
-                ImageUtil.compressImage(msg.getImagePath(), new FileCallback() {
-                    @Override
-                    public void callback(boolean isSuccess, String outfile, Throwable t) {
-                        if (isSuccess){
-                            msg.setImagePath(outfile);
-                        }
-                        mModel.sendMessage(msg,mTargetIp,position);
+        if (msg.getMsgType() == Protocol.IMAGE){
+            //压缩图片
+            ImageUtil.compressImage(msg.getImagePath(), new FileCallback() {
+                @Override
+                public void callback(boolean isSuccess, String outfile, Throwable t) {
+                    if (isSuccess){
+                        msg.setImagePath(outfile);
                     }
-                });
-            }else {
-                mModel.sendMessage(msg,mTargetIp,position);
-            }
-            if (msg.getMsgType() == Protocol.FILE){
-                msg.transformMessageEntity(mTargetIp).saveOrUpdate("targetIp = ? and filePath = ?",mTargetIp,msg.getFileBean().getFilePath());
-            }else {
-                msg.transformMessageEntity(mTargetIp).saveOrUpdate("targetIp = ? and sendStatus = 1",mTargetIp);
-            }
+                    mModel.sendMessage(msg,position);
+                    msg.save();
+                }
+            });
+        }else {
+            mModel.sendMessage(msg,position);
+            msg.save();
+        }
     }
 
     @Override
@@ -93,14 +85,19 @@ public class ChatDetailPresenter extends BasePresenter<ChatDetailContract.View> 
     }
 
     @Override
-    public void fileSending(final int position, final FileBean fileBean) {
+    public void fileSending(final int position, final MessageBean messageBean) {
         if (isAttachView()){
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    getMvpView().fileSending(position, fileBean);
+                    getMvpView().fileSending(position, messageBean);
                 }
             });
         }
+    }
+
+    @Override
+    public void exit() {
+        mModel.exit();
     }
 }
