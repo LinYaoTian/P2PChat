@@ -549,8 +549,6 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     mHandler.sendEmptyMessage(SCROLL_NOW);
                     EventBus.getDefault().post(new RecentMsgEvent("图片",mTargetPeerIp));
                     presenter.sendMsg(imageMsg,mMsgRvAdapter.getItemCount()-1);
-                } else {
-                    showToast("获取拍照后的相片路径失败！");
                 }
                 break;
             case FILE_MANAGER:
@@ -569,8 +567,6 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
                     mHandler.sendEmptyMessage(SCROLL_NOW);
                     EventBus.getDefault().post(new RecentMsgEvent("文件",mTargetPeerIp));
                     presenter.sendMsg(fileMsg,mMsgRvAdapter.getItemCount()-1);
-                } else {
-                    showToast("从文件管理器获取文件失败！");
                 }
                 break;
         }

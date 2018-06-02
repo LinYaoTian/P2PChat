@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentPagerAdapter;
@@ -60,6 +61,7 @@ public class MainActivity extends BaseActivity {
     @BindView(R.id.vp_act_main)
     ViewPager mVpContent;
 
+    private FragmentPagerAdapter mFragmentPagerAdapter;
     private boolean checking = true;// true 选中聊天列表 , false 选中 聊天室
     private static final String TAG = "LYT";
     private static final int BROADCAST_PORT = 3000;
@@ -85,6 +87,16 @@ public class MainActivity extends BaseActivity {
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle outState) {
+//        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+    }
+
+    @Override
     public BasePresenter getInstance() {
         return null;
     }
@@ -99,6 +111,8 @@ public class MainActivity extends BaseActivity {
 
     }
 
+
+
     @Override
     protected void initView() {
         initToolbar();
@@ -107,7 +121,7 @@ public class MainActivity extends BaseActivity {
 //        mDrawerToggle.syncState();
 //        mDrawerLayout.addDrawerListener(mDrawerToggle);
         mPeerListFragment = new PeerListFragment();
-        mVpContent.setAdapter(new FragmentPagerAdapter(getSupportFragmentManager()) {
+        mFragmentPagerAdapter = new FragmentPagerAdapter(getSupportFragmentManager()) {
             @Override
             public Fragment getItem(int position) {
                 switch (position){
@@ -121,7 +135,18 @@ public class MainActivity extends BaseActivity {
             public int getCount() {
                 return 1;
             }
-        });
+
+            @Override
+            public void restoreState(Parcelable state, ClassLoader loader) {
+                super.restoreState(state, loader);
+            }
+
+            @Override
+            public Parcelable saveState() {
+                return super.saveState();
+            }
+        };
+        mVpContent.setAdapter(mFragmentPagerAdapter);
     }
 
     private void initToolbar() {

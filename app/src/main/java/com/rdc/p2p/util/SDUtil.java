@@ -401,7 +401,8 @@ public class SDUtil {
         }
         while (true){
             if (fileNameList.contains(fileName)){
-                fileName = name + "*" +type;
+                name = name + "*";
+                fileName = name + type;
             }else {
                 break;
             }
