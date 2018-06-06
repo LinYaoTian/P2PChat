@@ -17,7 +17,7 @@ public interface PeerListContract {
         void addPeer(PeerBean peerBean);
         void removePeer(String ip);
         void serverSocketError(String msg);
-        void linkPeerSuccess(PeerBean peerBean);
+        void linkPeerSuccess(String ip);
         void linkPeerError(String message,String targetIp);
         void initServerSocketSuccess();
     }
@@ -36,7 +36,7 @@ public interface PeerListContract {
         void initSocket();
         void linkPeers(List<String> list);
         void linkPeer(String targetIp);
-        void linkPeerSuccess(PeerBean peerBean);
+        void linkPeerSuccess(String ip);
         void linkPeerError(String message,String targetIp);
         void updatePeerList(List<PeerBean> list);
         void addPeer(PeerBean peerBean);

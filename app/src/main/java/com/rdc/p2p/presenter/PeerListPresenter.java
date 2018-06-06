@@ -58,12 +58,12 @@ public class PeerListPresenter extends BasePresenter<PeerListContract.View> impl
 
 
     @Override
-    public void linkPeerSuccess(final PeerBean peerBean) {
+    public void linkPeerSuccess(final String ip) {
         if (isAttachView()){
             mActivity.runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    getMvpView().linkPeerSuccess(peerBean);
+                    getMvpView().linkPeerSuccess(ip);
                 }
             });
         }

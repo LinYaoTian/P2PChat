@@ -138,6 +138,8 @@ public class PeerListModel implements PeerListContract.Model {
             public void run() {
                 if (!linkSocket(targetIp)){
                     mPresenter.linkPeerError("建立Socket连接失败，对方已退出网络或网络错误！",targetIp);
+                }else {
+                    mPresenter.linkPeerSuccess(targetIp);
                 }
             }
         });
@@ -175,8 +177,8 @@ public class PeerListModel implements PeerListContract.Model {
             e.printStackTrace();
         } finally {
             isInitServerSocket.set(false);
-            mExecutor.shutdownNow();
             SocketManager.getInstance().destroy();
+            mExecutor.shutdownNow();
         }
     }
 
@@ -205,7 +207,7 @@ public class PeerListModel implements PeerListContract.Model {
                                     continue;
                                 }
                                 OutputStream os = socket.getOutputStream();
-                                os.write(Protocol.KEEP_LIVE);
+                                os.write(Protocol.KEEP_USER);
                             } catch (IOException e) {
                                 e.printStackTrace();
                                 Log.d(TAG, "pollingSocket error: "+entry.getKey());

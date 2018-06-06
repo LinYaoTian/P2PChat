@@ -246,8 +246,8 @@ public class PeerListFragment extends BaseFragment<PeerListPresenter> implements
     }
 
     @Override
-    public void linkPeerSuccess(PeerBean peerBean) {
-        ChatDetailActivity.actionStart(mBaseActivity,peerBean.getUserIp(),peerBean.getNickName(),peerBean.getUserImageId());
+    public void linkPeerSuccess(String ip) {
+        showToast("连接 Socket 成功！");
     }
 
     @Override

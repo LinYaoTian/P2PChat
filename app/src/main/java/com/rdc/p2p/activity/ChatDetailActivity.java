@@ -475,6 +475,7 @@ public class ChatDetailActivity extends BaseActivity<ChatDetailPresenter> implem
             public boolean onTouch(View view, MotionEvent motionEvent) {
                 switch (motionEvent.getAction()) {
                     case MotionEvent.ACTION_DOWN:
+                        mAudioRecorderUtil.cancelRecord();
                         mPwMicrophone.showAtLocation(mRootLayout, Gravity.CENTER, 0, 0);
                         mAudioRecorderUtil.startRecord();
                         break;

@@ -59,6 +59,20 @@ public class PeerListRvAdapter extends BaseRecyclerViewAdapter<PeerBean> {
     }
 
     /**
+     * 根据ip获取PeerBean
+     * @param peerIp
+     * @return
+     */
+    public PeerBean getItem(String peerIp){
+        for (PeerBean peerBean : mDataList) {
+            if (peerBean.getUserIp().equals(peerIp)){
+                return peerBean;
+            }
+        }
+        return null;
+    }
+
+    /**
      * 更新某个Item
      * @param peerBean
      */

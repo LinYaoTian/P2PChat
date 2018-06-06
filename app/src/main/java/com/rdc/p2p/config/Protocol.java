@@ -13,5 +13,6 @@ public class Protocol {
     public static final int CONNECT = 3;//连接请求
     public static final int CONNECT_RESPONSE = 4;//连接请求响应
     public static final int DISCONNECT = 5;//断开连接
-    public static final int KEEP_LIVE = 6;
+    public static final int KEEP_USER = 6;//保留用户
+    public static final int KEEP_USER_RESPONSE = 9;
 }

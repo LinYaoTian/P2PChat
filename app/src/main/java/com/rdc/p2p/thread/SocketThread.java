@@ -38,7 +38,7 @@ public class SocketThread extends Thread {
     private static final int DESTROY = 0;
     private static final int DELAY_DESTROY = 1;
     private static final String TAG = "SocketThread";
-    private static final int DELAY_MILLIS = 1000*60*5;
+    private static final int DELAY_MILLIS = 1000*60*30;
     private Socket mSocket;
     private PeerListContract.Presenter mPresenter;
     private String mTargetIp;
@@ -47,11 +47,13 @@ public class SocketThread extends Thread {
     private HandlerThread mHandlerThread;
     private AtomicBoolean mIsFileReceived;
     private OnSocketSendCallback mOnSocketSendCallback;
+    private boolean mKeepUser;
 
 
     public SocketThread(Socket mSocket, PeerListContract.Presenter mPresenter) {
         mTargetIp = mSocket.getInetAddress().getHostAddress();
         mTimeOutNeedDestroy = true;
+        mKeepUser = false;
         this.mSocket = mSocket;
         this.mPresenter = mPresenter;
         mIsFileReceived = new AtomicBoolean(true);
@@ -62,17 +64,16 @@ public class SocketThread extends Thread {
             public void handleMessage(Message msg) {
                 switch (msg.what){
                     case DESTROY:
+                        Log.d(TAG, "handleMessage: 销毁"+mTargetIp);
                         if (mTimeOutNeedDestroy){
-                            String ip = (String) msg.obj;
-                            SocketManager.getInstance().removeSocketByIp(ip);
-                            SocketManager.getInstance().removeSocketThreadByIp(ip);
-                            mHandlerThread.quitSafely();
+                          sendRequest(App.getUserBean(),Protocol.KEEP_USER);
                         }else {
                             mTimeOutNeedDestroy = true;
-                            mHandler.sendMessageDelayed(getDestroyMsg(), DELAY_MILLIS);
+                            mHandler.sendEmptyMessageDelayed(DESTROY,DELAY_MILLIS);
                         }
                         break;
                     case DELAY_DESTROY:
+                        Log.d(TAG, "handleMessage: 延迟销毁"+mTargetIp);
                         mTimeOutNeedDestroy = false;
                         break;
                 }
@@ -107,6 +108,7 @@ public class SocketThread extends Thread {
                 }
             }
         }
+        mHandler.sendEmptyMessage(DELAY_DESTROY);
         try {
             DataOutputStream dos = new DataOutputStream(mSocket.getOutputStream());
             dos.writeInt(messageBean.getMsgType());
@@ -188,7 +190,6 @@ public class SocketThread extends Thread {
                     }
                     break;
             }
-            mHandler.sendMessage(getDelayDestroyMsg());
         } catch (IOException e) {
             e.printStackTrace();
             mIsFileReceived.set(true);
@@ -212,6 +213,7 @@ public class SocketThread extends Thread {
      * @return
      */
     public boolean sendRequest(UserBean userBean, int msgType){
+        mHandler.sendEmptyMessage(DELAY_DESTROY);
         try {
             DataOutputStream dos = new DataOutputStream(mSocket.getOutputStream());
             dos.writeInt(msgType);
@@ -223,6 +225,10 @@ public class SocketThread extends Thread {
                     dos.writeUTF(GsonUtil.gsonToJson(userBean));
                     break;
                 case Protocol.FILE_RECEIVED:
+                    break;
+                case Protocol.KEEP_USER:
+                    break;
+                case Protocol.DISCONNECT:
                     break;
             }
         } catch (IOException e) {
@@ -236,18 +242,18 @@ public class SocketThread extends Thread {
 
     @Override
     public void run() {
-        mHandler.sendMessageDelayed(getDestroyMsg(), DELAY_MILLIS);
+        mHandler.sendEmptyMessageDelayed(DESTROY,DELAY_MILLIS);
         try {
             DataInputStream dis = new DataInputStream(mSocket.getInputStream());
             //循环读取消息
             while (true){
                 int type = dis.readInt();
-                mHandler.sendMessage(getDelayDestroyMsg());
+                mHandler.sendEmptyMessage(DELAY_DESTROY);
                 switch (type) {
                     case Protocol.DISCONNECT:
                         Log.d(TAG, "Protocol disconnect ! ip="+ mTargetIp);
-                        mPresenter.removePeer(mTargetIp);
-                        SocketManager.getInstance().removeSocketByIp(mTargetIp);
+                        mKeepUser = false;
+                        mSocket.close();
                         break;
                     case Protocol.CONNECT:
                         String u1 = dis.readUTF();
@@ -258,6 +264,14 @@ public class SocketThread extends Thread {
                     case Protocol.CONNECT_RESPONSE:
                         String u2 = dis.readUTF();
                         mPresenter.addPeer(getPeer(u2));
+                        break;
+                    case Protocol.KEEP_USER_RESPONSE:
+                        mKeepUser = true;
+                        mSocket.close();
+                        break;
+                    case Protocol.KEEP_USER:
+                        sendRequest(App.getUserBean(),Protocol.KEEP_USER_RESPONSE);
+                        mKeepUser = true;
                         break;
                     case Protocol.FILE_RECEIVED:
                         mIsFileReceived.set(true);
@@ -380,6 +394,9 @@ public class SocketThread extends Thread {
             }
         } catch (IOException e) {
             e.printStackTrace();
+            if (!mKeepUser){
+                mPresenter.removePeer(mTargetIp);
+            }
             SocketManager.getInstance().removeSocketByIp(mTargetIp);
             SocketManager.getInstance().removeSocketThreadByIp(mTargetIp);
             mHandlerThread.quitSafely();
@@ -401,17 +418,17 @@ public class SocketThread extends Thread {
         return peer;
     }
 
-    private Message getDestroyMsg(){
-        Message destroyMsg = new Message();
-        destroyMsg.obj = mTargetIp;
-        destroyMsg.what = DESTROY;
-        return destroyMsg;
-    }
-
-    private Message getDelayDestroyMsg(){
-        Message delayDestroyMsg = new Message();
-        delayDestroyMsg.obj = mTargetIp;
-        delayDestroyMsg.what = DELAY_DESTROY;
-        return delayDestroyMsg;
-    }
+//    private Message getDestroyMsg(){
+//        Message destroyMsg = new Message();
+//        destroyMsg.obj = mTargetIp;
+//        destroyMsg.what = DESTROY;
+//        return destroyMsg;
+//    }
+//
+//    private Message getDelayDestroyMsg(){
+//        Message delayDestroyMsg = new Message();
+//        delayDestroyMsg.obj = mTargetIp;
+//        delayDestroyMsg.what = DELAY_DESTROY;
+//        return delayDestroyMsg;
+//    }
 }
